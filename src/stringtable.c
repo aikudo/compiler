@@ -1,9 +1,11 @@
+#include<time.h>
 #include<stdlib.h>
 #include<stdio.h>
 #include<stdint.h> //C99
 #define HASH_OFFSET 2166136261
 #define FNV_PRIME 16777619
-#define HASH_INITSZ 7
+#define HASH_INITSZ 211
+//#define HASH_INITSZ 23
 
 uint32_t fnvhash (void *key, size_t len) {
    uint8_t *p = key;
@@ -16,6 +18,7 @@ typedef struct hashtable {
    struct node **table;
    size_t len;
    size_t size;
+   size_t dist; //longest distance
 }hashtable;
 
 typedef struct node {
@@ -33,6 +36,7 @@ hashtable *newhash(void){
 void delhash(hashtable **hp){
    hashtable *h = *hp;
    for (size_t i=0; i<h->size; i++){
+      free(h->table[i]);
       //free h->table[i].item;
    }
    free (h->table);
@@ -40,16 +44,46 @@ void delhash(hashtable **hp){
    h = NULL;
 }
 
-hashtable *inserthash(hashtable **hp, int item){
+node *inserthash(hashtable **hp, int item){
    hashtable *h = *hp;
    node *n = malloc(sizeof (node));
    n->item = item;
-   return h;
+   size_t hashcode = item % h->size;
+
+   size_t dist = 0;
+   for (size_t i = hashcode; i != hashcode - 1; i = (i + 1) % h->size){
+      dist++;
+      if (h->table[i] == NULL){
+         h->table[i] = n;
+         break;
+      }
+   }
+   printf("inserted %d /w hashcode %lu at distance %lu\n", item, hashcode, dist);
+
+   h->dist = (dist > h->dist) ? dist : h->dist;
+   return n;
+}
+
+void dumphash(hashtable *h){
+   for (size_t i = 0; i < h->size; ++i){
+      if (h->table[i]){
+         printf("table[%lu] = %d\n", i, h->table[i]->item);
+      }
+   }
 }
 
 
 int main (int argc, char **argv) {
    (void) argc;
    (void) argv;
+   hashtable *h = newhash();
+   srand(time(NULL));
+
+   for(size_t i = 0; i < 100; i++){
+      inserthash(&h, rand());
+   }
+
+   dumphash(h);
+   delhash(&h);
    return 0;
 }
