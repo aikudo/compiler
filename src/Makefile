@@ -23,10 +23,16 @@ auxlib.o : auxlib.c auxlib.h
 stringtable.o : stringtable.c stringtable.h
 	${CC} ${CFLAGS} -c stringtable.c
 
-ci : *.c *.h
-	git add *.c *.h Makefile
-	git commit -m "Automated commmit on `date`"
-	git push
+ci :
+	- git add *.c *.h Makefile
+	- git commit -m "Automated commmit on `date`"
+	- git push
+
+clean :
+	- rm *.o
+
+spotless : clean
+	rm -fr *core oc
 
 #	#cid + Makefile
 #

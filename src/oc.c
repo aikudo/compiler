@@ -8,6 +8,15 @@
 #define CPP "/usr/bin/cpp"
 #define BUFFSZ 256
 
+//a good handler for memory cleanup
+struct gblinfo{
+   char *progm;
+   int yydebug;
+   int yy_flex_debug;
+   int other;
+   FILE *fp;
+}gblinfo;
+
 
 char *getprogm(const char *filename){
    char ext[] = ".oc";
@@ -20,28 +29,13 @@ char *getprogm(const char *filename){
    }else {
       progm[ondot] = '\0'; //still have 3 extra spaces
    }
+   gblinfo.progm = progm;
    return progm;
 }
 
-void scanfile(FILE *fp, hashtable **stringset){
-   char buff[BUFFSZ];
-   char delim[] = " \t\n";
-   char *saveptr, *token;
-   while (fgets(buff, BUFFSZ, fp)){
-      for (char *str = buff; ; str = NULL){
-         token = strtok_r(str, delim, &saveptr);
-         if (token == NULL) break;
-         DEBUGF('t', "token: \"%s\"\n", token);
-         inserthash(stringset, token);
-      }
-   }
-}
-
-int main (int argc, char** argv) {
+FILE *scanopts(int argc, char **argv){
    int option;
    opterr = 0;
-   int yy_flex_debug = 0;
-   int yydebug = 0;
    char *cppdef = NULL;
    FILE *fp;
    set_execname(argv[0]);
@@ -51,15 +45,13 @@ int main (int argc, char** argv) {
       if (option == EOF) break;
       switch (option) {
          case '@': set_debugflags (optarg);   break;
-         case 'l': yy_flex_debug = 1;         break;
-         case 'y': yydebug = 1;               break;
+         case 'l': gblinfo.yy_flex_debug = 1; break;
+         case 'y': gblinfo.yydebug = 1;       break;
          case 'D': cppdef = optarg;           break;
          default:  errprintf ("%:bad option (%c)\n", optopt); break;
       }
    }
 
-   (void) yydebug;
-   (void) yy_flex_debug;
    if (optind >= argc) {
       errprintf ("Usage: %s [-ly] [filename]\n", get_execname());
       exit (get_exitstatus());
@@ -84,13 +76,32 @@ int main (int argc, char** argv) {
       syserrprintf (cpp_command);
       exit (get_exitstatus());
    }
+   gblinfo.fp = fp;
+   return fp;
+}
 
+void scanfile(FILE *fp, hashtable **stringset){
+   char buff[BUFFSZ];
+   char delim[] = " \t\n";
+   char *saveptr, *token;
+   while (fgets(buff, BUFFSZ, fp)){
+      for (char *str = buff; ; str = NULL){
+         token = strtok_r(str, delim, &saveptr);
+         if (token == NULL) break;
+         DEBUGF('t', "token: \"%s\"\n", token);
+         inserthash(stringset, token);
+      }
+   }
+}
+
+int main (int argc, char** argv) {
+   FILE *fp = scanopts(argc, argv);
    hashtable *stringset = newhash();
    scanfile(fp, &stringset);
-
    dumphash(stringset, 0);
    delhash(&stringset);
-   //scanner_newfilename (filename);*/
+   pclose(fp);
+   free(gblinfo.progm);
    return 0;
 }
 
