@@ -4,29 +4,31 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdint.h> //C99
-#define HASH_OFFSET 2166136261
-#define FNV_PRIME 16777619
+#include"stringtable.h"
 #define ALPHA 4 //loading factor slots/elements = 4
-//#define HASH_INITSZ 211
-#define HASH_INITSZ 15 
+//#define HASH_INITSZ 1009
+#define HASH_INITSZ 211
+//#define HASH_FUN(STR) (fnvhash64 (STR))
+#define HASH_FUN(STR) (hhash (STR))
 #define TSFILE ("/etc/dictionaries-common/words")
-//#define TSFILE ("words.txt")
-//#define TSFILE ("100words")
-//#define HASH_INITSZ 176001
-//#define HASH_INITSZ 131071
-//#define HASH_INITSZ 262143
-//#define HASH_INITSZ 148757
-//#define HASH_INITSZ 198343
 
-uint32_t fnvhash (const char *string) {
+uint32_t fnvhash32 (const char *string) { //FNV
    assert (string != NULL);
-   uint32_t hash = HASH_OFFSET;
+   uint32_t hash = 2166136261u;
    for (; *string != '\0'; ++string)
-      hash = (hash ^ *string) * FNV_PRIME;
+      hash = (hash ^ *string) * 16777619u;
    return hash;
 }
 
-size_t strhash (const char *string) {
+uint64_t fnvhash64 (const char *string) { //FNV
+   assert (string != NULL);
+   uint64_t hash = 1099511628211u;
+   for (; *string != '\0'; ++string)
+      hash = (hash ^ *string) * 14695981039346656037u;
+   return hash;
+}
+
+size_t hhash (const char *string) { //Horner's method
    assert (string != NULL);
    size_t hash = 0;
    for (; *string != '\0'; ++string)
@@ -34,19 +36,19 @@ size_t strhash (const char *string) {
    return hash;
 }
 
-typedef struct hashtable {
+struct hashtable {
    char **table;
    size_t len;  // number of actual items
    size_t size; // number of slots
-}hashtable;
+};
 
 hashtable *newhash (void) {
    hashtable *hp = malloc( sizeof(struct hashtable) );
-   assert( hp != NULL );
+   assert(hp != NULL);
    hp->len = 0;
    hp->size = HASH_INITSZ;
    hp->table = calloc( hp->size, sizeof(char *) );
-   assert( hp->table != NULL );
+   assert(hp->table != NULL);
    return hp;
 }
 
@@ -63,21 +65,13 @@ char *inserthash (hashtable **hashset, const char *string) {
    hashtable *hp = *hashset;
    if ( hp->len * ALPHA > hp->size) { 
       size_t newsz = hp->size * 2 + 1;
-      printf("#element %lu double %lu -> %lu\n", hp->len, hp->size, newsz);
-
-      /*
-      for (size_t i = 0; i < hp->size; i++){
-         printf("a[%lu]: @%p \n", i, hp->table[i]);
-         if( hp->table[i] ) printf("%s\n",   hp->table[i]);
-      }*/
-
+      //printf("#element %lu double %lu -> %lu\n", hp->len, hp->size, newsz);
       char **oldtable = hp->table;
       char **newtable = calloc( newsz, sizeof (char*) );
       assert (newtable != NULL);
-      for (size_t j = 0; j < hp->size; j++) { //transfer old table to new
+      for (size_t j = 0; j < hp->size; j++) { //transfer to new table
          if (oldtable[j] == NULL) continue;
-         //size_t hashcode = fnvhash(string, strlen(string)) % newsz;
-         size_t hashidx = strhash(oldtable[j]) % newsz;
+         size_t hashidx = HASH_FUN(oldtable[j]) % newsz;
          for (size_t i = hashidx; i != hashidx - 1; i = (i + 1) % newsz){
             if (newtable[i] == NULL) {
                newtable[i] = oldtable[j];
@@ -90,11 +84,12 @@ char *inserthash (hashtable **hashset, const char *string) {
       hp->table = newtable ;
    }
 
-   size_t hashidx = strhash(string) % hp->size;
+   size_t hashidx = HASH_FUN(string) % hp->size;
    char *inserted = NULL;
    for (size_t i = hashidx; i != hashidx - 1; i = (i + 1) % hp->size){
       if (hp->table[i] == NULL) {
          hp->table[i] = strdup (string);
+         assert (hp->table[i] != NULL);
          hp->len++;
          inserted = hp->table[i];
          break;
@@ -113,11 +108,11 @@ void dumphash(hashtable *hashset, unsigned char details){
    bzero(cluster, sizeof cluster );
 
    for(size_t i = 0; i < hp->len; /* i++ @ two places */ ){
-      dist = 0;
+      dist = 1;
       while(hp->table[i] != NULL){
          if (details)
             printf("array[%10lu] = %12lu \"%s\"\n",
-                  i, strhash(hp->table[i]), hp->table[i]);
+                  i, (long unsigned int) HASH_FUN(hp->table[i]), hp->table[i]);
          ++dist;
          ++i;
       }
@@ -130,10 +125,9 @@ void dumphash(hashtable *hashset, unsigned char details){
    for (size_t i = 0; i < CMAX; i++)
       if (cluster[i])
          printf("%12d clusters of size %lu\n", cluster[i], i );
-
 }
 
-
+/*
 int main (int argc, char **argv) {
    (void) argc;
    (void) argv;
@@ -142,26 +136,14 @@ int main (int argc, char **argv) {
 
    h = newhash();
    for(int i = 0; i<10; i++){
-
-   //FILE *fp = fopen("/etc/dictionaries-common/words", "r");
-   FILE *fp = fopen(TSFILE, "r");
-   //FILE *fp = fopen("short.list", "r");
-   //FILE *fp = fopen("100words", "r");
-
-   //   for(size_t j = 0; j < 100000; j++){
-   //for(size_t i = 0; i < 10; i++){
-
-   char buff[80];
-   while(fgets(buff, 80, fp)){
-      //printf("%u\n", fnvhash(buff, strlen(buff)) % 131071 );
-      inserthash(&h, buff );
-   }
-   //printf("distance %lu\n", h->dist);
-   fclose(fp);
-   //  }
+      FILE *fp = fopen(TSFILE, "r");
+      char buff[80];
+      while(fgets(buff, 80, fp)) inserthash(&h, buff );
+      fclose(fp);
    }
 
    dumphash(h,0);
    delhash(&h);
    return 0;
 }
+*/
