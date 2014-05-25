@@ -6,11 +6,12 @@
 #include<stdint.h> //C99
 #define HASH_OFFSET 2166136261
 #define FNV_PRIME 16777619
-#define ALPHA 3
+#define ALPHA 4 //loading factor slots/elements = 4
 //#define HASH_INITSZ 211
 #define HASH_INITSZ 15 
-//#define TSFILE ("/etc/dictionaries-common/words")
-#define TSFILE ("words.txt")
+#define TSFILE ("/etc/dictionaries-common/words")
+//#define TSFILE ("words.txt")
+//#define TSFILE ("100words")
 //#define HASH_INITSZ 176001
 //#define HASH_INITSZ 131071
 //#define HASH_INITSZ 262143
@@ -34,121 +35,101 @@ size_t strhash (const char *string) {
 }
 
 typedef struct hashtable {
-   struct node **table;
-   size_t len;
-   size_t size;
-   size_t dist; //longest distance
+   char **table;
+   size_t len;  // number of actual items
+   size_t size; // number of slots
 }hashtable;
 
-typedef struct node {
-   char *item;
-   int dist;
-}node;
-
-hashtable *newhash(void){
-   hashtable *h = malloc(sizeof(hashtable));
-   h->dist = 0;
-   h->len = 0;
-   h->size = HASH_INITSZ;
-   h->table = calloc(h->size, sizeof(struct node *));
-   return h;
+hashtable *newhash (void) {
+   hashtable *hp = malloc( sizeof(struct hashtable) );
+   assert( hp != NULL );
+   hp->len = 0;
+   hp->size = HASH_INITSZ;
+   hp->table = calloc( hp->size, sizeof(char *) );
+   assert( hp->table != NULL );
+   return hp;
 }
 
-void delhash(hashtable **hp){
-   hashtable *h = *hp;
-   for (size_t i=0; i<h->size; i++){
-      free(h->table[i]);
-      //free h->table[i].item;
-   }
-   free (h->table);
-   free (h);
-   h = NULL;
+void delhash (hashtable **hashset) {
+   hashtable *hp = *hashset;
+   for (size_t i = 0; i < hp->size; i++)
+      if (hp->table[i] != NULL) free(hp->table[i]);
+   free (hp->table);
+   free (hp);
+   hp = NULL;
 }
 
-node *inserthash(hashtable **hp, char *item){
-   hashtable *h = *hp;
-   node **nt;
-   size_t sz = h->size;
-   size_t newsz = sz*2+1;
-   size_t len = h->len; 
-   //don't need to allocated for matched
-   node *node = malloc(sizeof (node));
-   //n->item = strdup(item);
-   node->item = strdup(item);
-   node->dist = 0;
+char *inserthash (hashtable **hashset, const char *string) {
+   hashtable *hp = *hashset;
+   if ( hp->len * ALPHA > hp->size) { 
+      size_t newsz = hp->size * 2 + 1;
+      printf("#element %lu double %lu -> %lu\n", hp->len, hp->size, newsz);
 
-   //if(len*2 > sz){ //always try to have at least 2x slots than elements
-   if(len*ALPHA > sz){ //always try to have at least 2x slots than elements
-      printf("#element %lu double %lu -> %lu\n", len, sz, newsz);
-      nt = malloc(newsz * sizeof (struct node*));
-      h->dist = 0;
-      h->size = newsz;
-      for(size_t j = 0; j < sz; j++){ //transfer old table to new
-         if(h->table[j] == NULL) continue;
-         //size_t hashcode = fnvhash(item, strlen(item)) % newsz;
-         size_t hashcode = strhash(h->table[j]->item) % newsz;
-         size_t dist = 0;
-         for (size_t i = hashcode; i != hashcode - 1; i = (i + 1) % newsz){
-            dist++;
-            if (nt[i] == NULL){
-               nt[i] = h->table[j];
-               nt[i]->dist = dist;
+      /*
+      for (size_t i = 0; i < hp->size; i++){
+         printf("a[%lu]: @%p \n", i, hp->table[i]);
+         if( hp->table[i] ) printf("%s\n",   hp->table[i]);
+      }*/
+
+      char **oldtable = hp->table;
+      char **newtable = calloc( newsz, sizeof (char*) );
+      assert (newtable != NULL);
+      for (size_t j = 0; j < hp->size; j++) { //transfer old table to new
+         if (oldtable[j] == NULL) continue;
+         //size_t hashcode = fnvhash(string, strlen(string)) % newsz;
+         size_t hashidx = strhash(oldtable[j]) % newsz;
+         for (size_t i = hashidx; i != hashidx - 1; i = (i + 1) % newsz){
+            if (newtable[i] == NULL) {
+               newtable[i] = oldtable[j];
                break;
             }
          }
-         h->dist = (dist > h->dist) ? dist : h->dist;
       }
-      free(h->table);
-      h->table = nt;
+      free(hp->table);
+      hp->size = newsz;
+      hp->table = newtable ;
    }
 
-   size_t dist = 0;
-   //size_t hashcode = fnvhash(item, strlen(item)) % h->size;
-   size_t hashcode = strhash(item) % h->size;
-   for (size_t i = hashcode; i != hashcode - 1; i = (i + 1) % h->size){
-      dist++;
-      if (h->table[i] == NULL){
-         node->dist = dist;
-         h->table[i] = node;
-         h->len++;
+   size_t hashidx = strhash(string) % hp->size;
+   char *inserted = NULL;
+   for (size_t i = hashidx; i != hashidx - 1; i = (i + 1) % hp->size){
+      if (hp->table[i] == NULL) {
+         hp->table[i] = strdup (string);
+         hp->len++;
+         inserted = hp->table[i];
+         break;
+      }else if (strcmp(hp->table[i], string) == 0){  //skip duplicated
+         inserted = hp->table[i];
          break;
       }
    }
-   //printf("inserted %d /w hashcode %lu at distance %lu\n", item, hashcode, dist);
-   h->dist = (dist > h->dist) ? dist : h->dist;
-   return node;
+   return inserted;
 }
 
 #define CMAX 128
-void dumphash(hashtable *h, unsigned char details){
-   size_t empty = 0;
-   for (size_t i = 0; i < h->size; ++i){
-      if (h->table[i]){
-         if (details)
-            printf("dist %u table[%lu] = %s\n",
-                  h->table[i]->dist, i, h->table[i]->item);
-      } else empty++;
-   }
-   printf("size %lu, len %lu, vac %lu, dist %lu\n",
-         h->size, h->len, empty, h->dist);
-
-
-
+void dumphash(hashtable *hashset, unsigned char details){
+   hashtable *hp = hashset;
    int cluster[CMAX], dist;
-   //memset(cluster, 0, sizeof cluster );
    bzero(cluster, sizeof cluster );
-   //for(int i=0; i<CMAX; i++) cluster[i] = 0 ;
-   for(size_t i = 0; i < h->len; ){
+
+   for(size_t i = 0; i < hp->len; /* i++ @ two places */ ){
       dist = 0;
-      while(h->table[i++] != NULL) dist++;
+      while(hp->table[i] != NULL){
+         if (details)
+            printf("array[%10lu] = %12lu \"%s\"\n",
+                  i, strhash(hp->table[i]), hp->table[i]);
+         ++dist;
+         ++i;
+      }
       if(dist < CMAX) cluster[dist]++;
+      ++i;
    }
 
-   printf("%12lu words in the hash set\n", h->len);
-   printf("%12d length of the hash array\n", (int) h->size);
-   for (int i = 0; i < CMAX; i++)
+   printf("%12lu words in the hash set\n", hp->len);
+   printf("%12d length of the hash array\n", (int) hp->size);
+   for (size_t i = 0; i < CMAX; i++)
       if (cluster[i])
-         printf("%12d clusters of size %d\n", cluster[i],  i );
+         printf("%12d clusters of size %lu\n", cluster[i], i );
 
 }
 
