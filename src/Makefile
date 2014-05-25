@@ -25,7 +25,7 @@ stringtable.o : stringtable.c stringtable.h
 
 ci : *.c *.h
 	git add *.c *.h Makefile
-	git commit -m "Automated commmit on `data`"
+	git commit -m "Automated commmit on `date`"
 	git push
 
 #	#cid + Makefile
