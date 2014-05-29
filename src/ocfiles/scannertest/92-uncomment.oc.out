@@ -1,0 +1,16 @@
+--(end of buffer or a NUL)
+ocfiles/92-uncomment.oc:1:1: error: unterminated comment
+--accepting rule at line 41 ("# 1 "ocfiles/92-uncomment.oc"")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 41 ("# 1 "<command-line>"")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 41 ("# 1 "ocfiles/92-uncomment.oc"")
+--accepting rule at line 43 ("
+")
+--(end of buffer or a NUL)
+--EOF (start condition 0)
+;# 1 "ocfiles/92-uncomment.oc"
+;# 1 "<command-line>"
+;# 1 "ocfiles/92-uncomment.oc"

@@ -1,0 +1,30 @@
+# 1 "ocfiles/91-typecheck.oc"
+# 1 "<command-line>"
+# 1 "ocfiles/91-typecheck.oc"
+
+
+
+
+
+
+int[] a = null;
+reference[] a = new string[10];
+void foo ();
+void foo (int a);
+void foo (int[] a, int[] b) {int x = a + b;}
+struct foo { int a; int b; }
+
+a + b;
+f ();
+f (x, y+3, z);
+foo + bar;
+a = b = c = d;
+test = abc + def + ghi;
+this + 23 * a + "hello";
+while (a < b) f = f + 1;
+return 3 + 4;
+a[i] = b[j];
+return;
+while (true) {a = 3; b = 4; }
+if (a == b) f (x);
+if (a != b) y = 3; else f (y, z);

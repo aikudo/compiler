@@ -1,0 +1,15 @@
+--(end of buffer or a NUL)
+--accepting rule at line 41 ("# 1 "ocfiles/00-trivial.oc"")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 41 ("# 1 "<command-line>"")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 41 ("# 1 "ocfiles/00-trivial.oc"")
+--accepting rule at line 43 ("
+")
+--(end of buffer or a NUL)
+--EOF (start condition 0)
+;# 1 "ocfiles/00-trivial.oc"
+;# 1 "<command-line>"
+;# 1 "ocfiles/00-trivial.oc"

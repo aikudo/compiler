@@ -1,0 +1,82 @@
+--(end of buffer or a NUL)
+ocfiles/96-unterminated.oc:5:12: warning: missing terminating " character [enabled by default]
+ocfiles/96-unterminated.oc:6:10: warning: missing terminating ' character [enabled by default]
+ocfiles/96-unterminated.oc:7:5: warning: missing terminating " character [enabled by default]
+ocfiles/96-unterminated.oc:8:5: warning: missing terminating " character [enabled by default]
+--accepting rule at line 41 ("# 1 "ocfiles/96-unterminated.oc"")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 41 ("# 1 "<command-line>"")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 41 ("# 1 "ocfiles/96-unterminated.oc"")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 85 ("string")
+--accepting rule at line 42 (" ")
+--accepting rule at line 92 ("t")
+--accepting rule at line 42 (" ")
+--accepting rule at line 68 ("=")
+--accepting rule at line 42 (" ")
+--accepting rule at line 102 (""\*/"")
+;# 1 "ocfiles/96-unterminated.oc"
+;# 1 "<command-line>"
+;# 1 "ocfiles/96-unterminated.oc"
+oc: ocfiles/96-unterminated.oc: 4: invalid token ("\*/")
+--accepting rule at line 59 (";")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 85 ("string")
+--accepting rule at line 42 (" ")
+--accepting rule at line 92 ("s")
+--accepting rule at line 42 (" ")
+--accepting rule at line 68 ("=")
+--accepting rule at line 42 (" ")
+--accepting rule at line 102 (""abc;")
+oc: ocfiles/96-unterminated.oc: 5: invalid token ("abc;)
+--accepting rule at line 43 ("
+")
+--accepting rule at line 75 ("char")
+--accepting rule at line 42 (" ")
+--accepting rule at line 92 ("c")
+--accepting rule at line 42 (" ")
+--accepting rule at line 68 ("=")
+--accepting rule at line 42 (" ")
+--accepting rule at line 99 ("'a")
+oc: ocfiles/96-unterminated.oc: 6: invalid token ('a)
+--accepting rule at line 59 (";")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 92 ("s")
+--accepting rule at line 42 (" ")
+--accepting rule at line 68 ("=")
+--accepting rule at line 42 (" ")
+--accepting rule at line 102 (""abcd\";")
+oc: ocfiles/96-unterminated.oc: 7: invalid token ("abcd\";)
+--accepting rule at line 43 ("
+")
+--accepting rule at line 92 ("s")
+--accepting rule at line 42 (" ")
+--accepting rule at line 68 ("=")
+--accepting rule at line 42 (" ")
+--accepting rule at line 102 (""abc|;")
+oc: ocfiles/96-unterminated.oc: 8: invalid token ("abc|;)
+--accepting rule at line 43 ("
+")
+--accepting rule at line 43 ("
+")
+--accepting rule at line 80 ("int")
+--accepting rule at line 42 (" ")
+--accepting rule at line 96 ("23foobar")
+oc: ocfiles/96-unterminated.oc: 10: invalid token (23foobar)
+--accepting rule at line 59 (";")
+--accepting rule at line 43 ("
+")
+--(end of buffer or a NUL)
+--EOF (start condition 0)
