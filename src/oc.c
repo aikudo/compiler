@@ -11,9 +11,17 @@
 #define CPP "/usr/bin/cpp"
 #define BUFFSZ 256
 
-//a good handler for memory cleanup
+//a global handler for memory cleanup
+#define PRM    0
+#define STR    1
+#define TOK    2
+#define AST    3
+#define SYM    4
+#define OIL    5
+#define OFILES 6
+
 struct gblinfo{
-   char *progm;
+   char **names;
    int yydebug;
    int yy_flex_debug;
    int other;
@@ -23,17 +31,24 @@ struct gblinfo{
 
 char *getprogm(const char *filename){
    char ext[] = ".oc";
-   char *progm = strdup(filename); //free this
    size_t ondot = strlen(filename) - strlen(ext);
 
    if (strcmp (filename + ondot, ext) != 0) {
       errprintf("%:incorrect suffix\n", filename);
       exit(get_exitstatus());
-   }else {
-      progm[ondot] = '\0'; //still have 3 extra spaces
    }
-   gblinfo.progm = progm;
-   return progm;
+   gblinfo.names = malloc(OFILES * sizeof (char*));
+   for(int i=0; i< OFILES; i++){
+      gblinfo.names[i] = malloc((strlen(filename) + 2) *sizeof(char));
+      gblinfo.names[i] = strncpy(gblinfo.names[i], filename, ondot);
+      gblinfo.names[i][ondot] = '\0';
+   }
+   gblinfo.names[STR] = strcat (gblinfo.names[STR], ".str");
+   gblinfo.names[TOK] = strcat (gblinfo.names[TOK], ".tok");
+   gblinfo.names[AST] = strcat (gblinfo.names[AST], ".ast");
+   gblinfo.names[SYM] = strcat (gblinfo.names[SYM], ".sym");
+   gblinfo.names[OIL] = strcat (gblinfo.names[OIL], ".oil");
+   return gblinfo.names[PRM];
 }
 
 FILE *scanopts(int argc, char **argv){
@@ -80,7 +95,7 @@ FILE *scanopts(int argc, char **argv){
       exit (get_exitstatus());
    }
    //yyin = fp;
-   scanner_newfilename (filename);
+   //scanner_newfilename (filename);
    gblinfo.fp = fp;
    return fp;
 }
@@ -99,23 +114,46 @@ void scanfile(FILE *fp, hashtable **stringset){
    }
 }
 
+struct {
+   astree *tokens;
+   int size;
+   int last;
+} tokens = {NULL, 0 , -1};
+
+//void inserttokens
+
 int main (int argc, char** argv) {
    FILE *fp = scanopts(argc, argv);
    yyin = fp ;
   // int parsecode = yyparse();
 
    extern astree yylval;
+   //will have lots of memory leak
    while( yylex() != YYEOF ){
+      //insert search on into the string table.
+      //insert into a list of tokens
+
       printf("sizeof %d \n",  yylval->symbol);
+      free(yylval->lexinfo);
+      free(yylval);
    }
+
+
    /*
    hashtable *stringset = newhash();
    scanfile(fp, &stringset);
    dumphash(stringset, 0);
    delhash(&stringset);
    */
+
+   //freemem();
    pclose(fp);
-   free(gblinfo.progm);
+   for(int i=0; i < OFILES; i++){
+      free( gblinfo.names[i]);
+   }
+   free(gblinfo.names);
+   yylex_destroy();
+   scanner_destroy();
    return 0;
 }
 

@@ -41,7 +41,8 @@ void scanner_newfilename (char *filename) {
                        filename_stack.size * sizeof (char*));
       assert (filename_stack.filenames != NULL);
    }
-   char *newfilename = strdup (filename);
+   //char *newfilename = strdup (filename);
+   char *newfilename = filename; //already strduped line 113
    assert (newfilename != NULL);
    filename_stack.filenames[++filename_stack.last_filenr]
          = newfilename;
@@ -108,6 +109,7 @@ void scanner_include (void) {
       errprintf ("%: %d: [%s]: invalid directive, ignored\n",
                  scan_rc, yytext);
    }else {
+      //alloc is on stack so we still need to make a copy
       char *newfilename = strdup (filename);
       assert (newfilename != NULL);
       printf (";# %d \"%s\"\n", linenr, newfilename);
@@ -119,6 +121,13 @@ void scanner_include (void) {
    }
 }
 
+void scanner_destroy(void){
+   for (int i = 0; i <= filename_stack.last_filenr; i++)
+      free(filename_stack.filenames[i]);
+   free(filename_stack.filenames);
+}
+
+
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.1 2014-05-28 19:42:39-07 - - $")
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.2 2014-05-29 12:39:22-07 - - $")
 
