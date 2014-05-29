@@ -32,10 +32,12 @@ STR_CONST       \"([^\\"\n]|\\[\\'"0nt])*\"
 IDENT           {LETTER}({LETTER}|{DIGIT})*
 
 BADIDENT        {DIGIT}+{IDENT}
-BADCHAR         '([^\\'\n]|\\[\\'"0nt]?)[^']?
-BADSTR          \"([^\\"\n]|\\[\\'"0nt])*[^\"]?
-BADTOK          {BADIDENT}|{BADCHAR}|{BADSTR}
-/*BADCHAR and BADSTR might be wrong */
+MISSQUOTESTR    \"([^\\"\n]|\\[\\'"0nt])*
+BADESCAPESTR    \"([^\\"\n]|\\.?)*\"
+BADSTR          {MISSQUOTESTR}|{BADESCAPESTR}
+MISSQUOTECHR    '([^\\'\n]|\\[\\'"0nt])
+BADESCAPECHR    '([^\\'\n]|\\.?)'
+BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 
 %%
 
