@@ -1,9 +1,13 @@
 
+#define _GNU_SOURCE
+#define __USE_GNU
+
 #include <assert.h>
 #include <errno.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,31 +16,32 @@
 #include "auxlib.h"
 
 static int exitstatus = EXIT_SUCCESS;
-static const char* execname = NULL;
-static const char* debugflags = "";
-static char alldebugflags = 0;
+static char *execname = NULL;
+static char *debugflags = "";
+static bool alldebugflags = false;
 
-void set_execname (char* argv0) {
+void set_execname (char *argv0) {
    execname = basename (argv0);
 }
 
-const char* get_execname (void) {
+char *get_execname (void) {
    assert (execname != NULL);
    return execname;
 }
 
-static void eprint_signal (const char* kind, int signal) {
+static void eprint_signal (char *kind, int signal) {
    eprintf (", %s %d", kind, signal);
-   const char* sigstr = strsignal (signal);
+   char *sigstr = strsignal (signal);
    if (sigstr != NULL) fprintf (stderr, " %s", sigstr);
 }
 
-void eprint_status (const char* command, int status) {
+void eprint_status (char *command, int status) {
    if (status == 0) return; 
    eprintf ("%s: status 0x%04X", command, status);
    if (WIFEXITED (status)) {
       eprintf (", exit %d", WEXITSTATUS (status));
    }
+   // LINTED (warning: cast from 32-bit integer to 8-bit integer)
    if (WIFSIGNALED (status)) {
       eprint_signal ("Terminated", WTERMSIG (status));
       #ifdef WCOREDUMP
@@ -56,7 +61,8 @@ int get_exitstatus (void) {
    return exitstatus;
 }
 
-void veprintf (const char* format, va_list args) {
+
+void veprintf (char *format, va_list args) {
    assert (execname != NULL);
    assert (format != NULL);
    fflush (NULL);
@@ -68,14 +74,14 @@ void veprintf (const char* format, va_list args) {
    fflush (NULL);
 }
 
-void eprintf (const char* format, ...) {
+void eprintf (char *format, ...) {
    va_list args;
    va_start (args, format);
    veprintf (format, args);
    va_end (args);
 }
 
-void errprintf (const char* format, ...) {
+void errprintf (char *format, ...) {
    va_list args;
    va_start (args, format);
    veprintf (format, args);
@@ -83,17 +89,18 @@ void errprintf (const char* format, ...) {
    exitstatus = EXIT_FAILURE;
 }
 
-void syserrprintf (const char* object) {
+void syserrprintf (char *object) {
    errprintf ("%:%s: %s\n", object, strerror (errno));
 }
 
 void set_exitstatus (int newexitstatus) {
+   newexitstatus &= 0xFF;
    if (exitstatus < newexitstatus) exitstatus = newexitstatus;
    DEBUGF ('x', "exitstatus = %d\n", exitstatus);
 }
 
-void __stubprintf (const char* file, int line, const char* func,
-                   const char* format, ...) {
+void __stubprintf (char *file, int line, const char *func,
+                   char *format, ...) {
    va_list args;
    fflush (NULL);
    printf ("%s: %s[%d] %s: ", execname, file, line, func);
@@ -104,19 +111,19 @@ void __stubprintf (const char* file, int line, const char* func,
 }     
 
 
-void set_debugflags (const char* flags) {
+void set_debugflags (char *flags) {
    debugflags = flags;
-   if (strchr (debugflags, '@') != NULL) alldebugflags = 1;
+   if (strchr (debugflags, '@') != NULL) alldebugflags = true;
    DEBUGF ('x', "Debugflags = \"%s\", all = %d\n",
            debugflags, alldebugflags);
 }
 
 char is_debugflag (char flag) {
-   return (alldebugflags || strchr (debugflags, flag) != NULL );
+   return alldebugflags || strchr (debugflags, flag) != NULL;
 }
 
-void __debugprintf (char flag, const char* file, int line,
-                    const char* func, const char* format, ...) {
+void __debugprintf (char flag, char *file, int line, const char *func,
+                    char *format, ...) {
    va_list args;
    if (! is_debugflag (flag)) return;
    fflush (NULL);
@@ -128,5 +135,6 @@ void __debugprintf (char flag, const char* file, int line,
    fflush (NULL);
 }
 
-RCSC("$Id: auxlib.cc,v 1.2 2013-10-11 18:56:07-07 - - $")
+// LINTED(static unused)
+RCSC(AUXLIB_C,"$Id: auxlib.c,v 1.1 2014-05-28 19:42:39-07 - - $")
 

@@ -181,6 +181,7 @@ void dumphashfile(hashtable *hp, FILE *fp){
    */
 
 }
+/*
 int main (int argc, char **argv) {
    (void) argc;
    (void) argv;
@@ -201,3 +202,4 @@ int main (int argc, char **argv) {
    delhash(&h);
    return 0;
 }
+*/

@@ -12,19 +12,19 @@
 // Error message and exit status utility.
 //
 
-void set_execname (char* argv0);
+void set_execname (char *argv0);
    //
    // Sets the program name for use by auxlib messages.
    // Must called from main before anything else is done,
    // passing in argv[0].
    //
 
-const char* get_execname (void);
+char *get_execname (void);
    //
-   // Returns a read-only value previously set by set_progname.
+   // Returns a read-only value previously stored by set_progname.
    //
 
-void eprint_status (const char* command, int status);
+void eprint_status (char *command, int status);
    //
    // Print the status returned by wait(2) from a subprocess.
    //
@@ -38,17 +38,17 @@ int get_exitstatus (void);
 
 void set_exitstatus (int);
    //
-   // Sets the exit status.  Remebers only the largest value.
+   // Sets the exit status.  Remebers only the largest value passed in.
    //
 
 
-void veprintf (const char* format, va_list args);
+void veprintf (char *format, va_list args);
    //
    // Prints a message to stderr using the vector form of 
    // argument list.
    //
 
-void eprintf (const char* format, ...);
+void eprintf (char *format, ...);
    //
    // Print a message to stderr according to the printf format
    // specified.  Usually called for debug output.
@@ -56,19 +56,17 @@ void eprintf (const char* format, ...);
    // begins with the characters `%:'.
    //
 
-void errprintf (const char* format, ...);
+void errprintf (char *format, ...);
    //
    // Print an error message according to the printf format
-   // specified, using eprintf.  Sets the exitstatus to
-   // EXIT_FAILURE.
+   // specified, using eprintf.  Sets the exitstatus to EXIT_FAILURE.
    //
 
-void syserrprintf (const char* object);
+void syserrprintf (char *object);
    //
    // Print a message resulting from a bad system call.  The
    // object is the name of the object causing the problem and
    // the reason is taken from the external variable errno.
-   // Sets the exit status to EXIT_FAILURE.
    //
 
 
@@ -77,22 +75,21 @@ void syserrprintf (const char* object);
 //
 #define STUBPRINTF(...) \
         __stubprintf (__FILE__, __LINE__, __func__, __VA_ARGS__)
-void __stubprintf (const char* file, int line, const char* func,
-                   const char* format, ...);
+void __stubprintf (char *file, int line, const char *func,
+                   char *format, ...);
 
 //
 // Debugging utility.
 //
 
-void set_debugflags (const char* flags);
-
-   // Sets a string of debug flags to be used by DEBUGF
-   // statements.  Uses the address of the string, and does
-   // not copy it, so it must not be dangling.  If a particular
-   // debug flag has been set, messages are printed.  The format
-   // is identical to printf format.  The flag "@" turns on
-   // all flags.
-
+void set_debugflags (char *flags);
+   //
+   // Sets a string of debug flags to be used by DEBUGF statements.
+   // Uses the address of the string, and does not copy it, so it
+   // must not be dangling.  If a particular debug flag has been set,
+   // messages are printed.  The format is identical to printf format.
+   // The flag "@" turns on all flags.
+   //
 
 char is_debugflag (char flag);
    //
@@ -105,23 +102,23 @@ char is_debugflag (char flag);
 #define DEBUGSTMT(FLAG,STMTS) /**/
 #else
 // Generate debugging code.
-void __debugprintf (char flag, const char* file, int line,
-                    const char* func, const char* format, ...);
+void __debugprintf (char flag, char *file, int line, const char *func,
+                    char *format, ...);
 #define DEBUGF(FLAG,...) \
-        __debugprintf (FLAG, __FILE__, __LINE__, __func__, \
-                       __VA_ARGS__)
+        __debugprintf (FLAG, __FILE__, __LINE__, __func__, __VA_ARGS__)
 #define DEBUGSTMT(FLAG,STMTS) \
         if (is_debugflag (FLAG)) { DEBUGF (FLAG, "\n"); STMTS }
 #endif
 
 //
-// Definition of RCSID macro to include RCS info in obj and exec.
+// Definition of RCSID macro to include RCS info in objs and execbin.
 //
+#define RCSH(NAME,ID) \
+static const char __RCS_##NAME[] = "\0" ID;
+#define RCSC(NAME,ID) \
+static const char __RCS_C_##NAME[] = "\0" ID \
+"\0$Compiled: " __FILE__ " " __DATE__ " " __TIME__ " $";
 
-#define RCS3(ID,N,X) static const char ID##N[] = X;
-#define RCS2(N,X) RCS3(RCS_Id,N,X)
-#define RCSH(X) RCS2(__COUNTER__,X)
-#define RCSC(X) RCSH(X \
-"\0$Compiled: " __FILE__ " " __DATE__ " " __TIME__ " $")
-RCSH("$Id: auxlib.h,v 1.2 2013-10-11 18:53:00-07 - - $") 
+// LINTED(static unused)
+RCSH(AUXLIB_H,"$Id: auxlib.h,v 1.1 2014-05-28 19:42:39-07 - - $")
 #endif
