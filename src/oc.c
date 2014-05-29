@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "astree.h"
+#include "astree.rep.h"
 #include "stringtable.h"
 #include "auxlib.h"
+#include "lyutils.h"
 #define CPP "/usr/bin/cpp"
 #define BUFFSZ 256
 
@@ -58,7 +61,7 @@ FILE *scanopts(int argc, char **argv){
    }
 
    char* filepath =  argv[optind];
-   const char* filename = basename(filepath);
+   char* filename = basename(filepath);
    char* progm = getprogm(filename);
    char cpp_command[256];
    char *to = cpp_command;
@@ -76,6 +79,8 @@ FILE *scanopts(int argc, char **argv){
       syserrprintf (cpp_command);
       exit (get_exitstatus());
    }
+   //yyin = fp;
+   scanner_newfilename (filename);
    gblinfo.fp = fp;
    return fp;
 }
@@ -96,10 +101,19 @@ void scanfile(FILE *fp, hashtable **stringset){
 
 int main (int argc, char** argv) {
    FILE *fp = scanopts(argc, argv);
+   yyin = fp ;
+  // int parsecode = yyparse();
+
+   extern astree yylval;
+   while( yylex() != YYEOF ){
+      printf("sizeof %d \n",  yylval->symbol);
+   }
+   /*
    hashtable *stringset = newhash();
    scanfile(fp, &stringset);
    dumphash(stringset, 0);
    delhash(&stringset);
+   */
    pclose(fp);
    free(gblinfo.progm);
    return 0;

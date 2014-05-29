@@ -1,10 +1,7 @@
 %{
-// $Id: scanner.l,v 1.2 2014-05-28 19:42:39-07 - - $
+// $Id: scanner.l,v 1.3 2014-05-29 00:03:00-07 - - $
 
-#include <stdlib.h>
-#include <stdbool.h>
-
-#include "auxlib.h"
+//#include "auxlib.h"
 #include "lyutils.h"
 #include "parser.h"
 
@@ -58,7 +55,7 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 "["          { return yylval_token ('[');           } 
 "]"          { return yylval_token (']');           } 
 "{"          { return yylval_token ('{');           } 
-"} "         { return yylval_token ('}');           } 
+"}"          { return yylval_token ('}');           } 
 ";"          { return yylval_token (';');           } 
 ","          { return yylval_token (',');           } 
 "."          { return yylval_token ('.');           } 
@@ -69,6 +66,10 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 "%"          { return yylval_token ('%');           } 
 "!"          { return yylval_token ('!');           } 
 "="          { return yylval_token ('=');           } 
+"|"          { return yylval_token ('|');           } 
+"?"          { return yylval_token ('?');           } 
+":"          { return yylval_token (':');           } 
+"&"          { return yylval_token ('&');           } 
 
 "bool"       { return yylval_token (TOK_BOOL);      } 
 "char"       { return yylval_token (TOK_CHAR);      } 
@@ -113,5 +114,5 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 //}
 
 // LINTED(static unused)
-RCSC(SCANNER_L,"$Id: scanner.l,v 1.2 2014-05-28 19:42:39-07 - - $")
+RCSC(SCANNER_L,"$Id: scanner.l,v 1.3 2014-05-29 00:03:00-07 - - $")
 
