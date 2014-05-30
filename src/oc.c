@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <libgen.h>
 #include <string.h>
 #include <stdlib.h>
@@ -135,7 +136,26 @@ void scanfile(void){
    }
 }
 
-void dumptok(FILE *out){
+void dumpstr(void){
+   FILE *out = fopen(gblinfo.names[STR], "w");
+   if(!out){
+      fprintf(stderr, "%s: %s\n", gblinfo.names[STR],
+            strerror(errno));
+      exit(1);
+   }
+   assert (gblinfo.stringset != NULL);
+   dumphash (gblinfo.stringset, out);
+   fclose (out);
+}
+
+
+void dumptok(void){
+   FILE *out = fopen(gblinfo.names[TOK], "w");
+   if(!out){
+      fprintf(stderr, "%s: %s\n", gblinfo.names[TOK],
+            strerror(errno));
+      exit(1);
+   }
    unsigned char printfile = -1;
    for(int i=0; i<=tlist.last; i++){
       if(printfile != tlist.tokens[i]->filenr){
@@ -153,6 +173,7 @@ void dumptok(FILE *out){
             tlist.tokens[i]->lexinfo
             );
    }
+   fclose (out);
 }
 
 extern int yylex_destroy (void);
@@ -180,10 +201,10 @@ int main (int argc, char** argv) {
    scanopts(argc, argv);
    gblinfo.stringset = newhash();
    scanfile();
+   dumpstr();
+   dumptok();
 
    destroy_all();
-
-
    return 0;
 }
 

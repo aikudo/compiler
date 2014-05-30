@@ -5,6 +5,5 @@ typedef struct hashtable hashtable;
 hashtable *newhash (void);
 void delhash (hashtable **hashset);
 char *inserthash (hashtable **hashset, const char *string);
-void dumphash(hashtable *hashset, unsigned char details);
-void dumphashfile(hashtable *hashset, FILE *fp);
+void dumphash(hashtable *hp, FILE *out);
 #endif

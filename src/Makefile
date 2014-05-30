@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2014-05-28 19:43:47-07 - - $
+# $Id: Makefile,v 1.4 2014-05-29 20:37:38-07 - - $
 
 MKFILE    = Makefile
 DEPSFILE  = ${MKFILE}.deps
@@ -89,8 +89,8 @@ lis : ${LISTSRC} tests
 # Clean and spotless remove generated files.
 #
 clean :
-	- rm ${OBJECTS} ${ALLGENS} ${REPORTS} ${DEPSFILE} core
-	- rm ${foreach test, ${TESTINS:.in=}, \
+	- rm -f ${OBJECTS} ${ALLGENS} ${REPORTS} ${DEPSFILE} core
+	- rm -f ${foreach test, ${TESTINS:.in=}, \
 		${patsubst %, ${test}.%, out err}}
 
 spotless : clean

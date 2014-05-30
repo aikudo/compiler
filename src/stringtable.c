@@ -73,14 +73,16 @@ char *inserthash (hashtable **hashset, const char *string) {
    hashtable *hp = *hashset;
    if ( hp->len * ALPHA > hp->size) { 
       size_t newsz = hp->size * 2 + 1;
-      printf("#element %lu double %lu -> %lu\n", hp->len, hp->size, newsz);
+      //printf("#element %lu double %lu -> %lu\n",
+      //hp->len, hp->size, newsz);
       char **oldtable = hp->table;
       char **newtable = calloc( newsz, sizeof (char*) );
       assert (newtable != NULL);
       for (size_t j = 0; j < hp->size; j++) { //transfer to new table
          if (oldtable[j] == NULL) continue;
          size_t hashidx = HASH_FUN(oldtable[j]) % newsz;
-         for (size_t i = hashidx; i != hashidx - 1; i = (i + 1) % newsz){
+         for (size_t i = hashidx; i != hashidx - 1;
+               i = (i + 1) % newsz){
             if (newtable[i] == NULL) {
                newtable[i] = oldtable[j];
                break;
@@ -94,7 +96,8 @@ char *inserthash (hashtable **hashset, const char *string) {
 
    size_t hashidx = HASH_FUN(string) % hp->size;
    char *inserted = NULL;
-   for (size_t i = hashidx; i != hashidx - 1; i = (i + 1) % hp->size){
+   for (size_t i = hashidx; i != hashidx - 1;
+         i = (i + 1) % hp->size){
       if (hp->table[i] == NULL) {
          hp->table[i] = strdup (string);
          assert (hp->table[i] != NULL);
@@ -112,40 +115,40 @@ char *inserthash (hashtable **hashset, const char *string) {
 }
 
 #define CMAX 128
-void dumphash(hashtable *hp, unsigned char details){
+void dumphashold(hashtable *hp, FILE *out, unsigned char details){
    int cluster[CMAX], dist;
    bzero(cluster, sizeof cluster );
 
    for(size_t i = 0; i < hp->len; /* i++ @ two places */ ){
       dist = 1;
       while(hp->table[i++] != NULL){
-         printf("%lu \n",i);
+         fprintf(out, "%lu \n",i);
          if (details)
-            printf( "array[%10lu] = %12lu \"%s\"\n", i,
+            fprintf(out, "array[%10lu] = %12lu \"%s\"\n", i,
                   (size_t) HASH_FUN(hp->table[i]), hp->table[i] );
          ++dist;
       }
       if(dist < CMAX) cluster[dist]++;
    }
 
-   printf("%12lu words in the hash set\n", hp->len);
-   printf("%12d length of the hash array\n", (int) hp->size);
+   fprintf(out, "%12lu words in the hash set\n", hp->len);
+   fprintf(out, "%12d length of the hash array\n", (int) hp->size);
    for (size_t i = 0; i < CMAX; i++)
       if (cluster[i])
-         printf("%12d clusters of size %lu\n", cluster[i], i );
+         fprintf(out, "%12d clusters of size %lu\n", cluster[i], i );
 }
 
-void dump(hashtable *hp){
+void dumphash(hashtable *hp, FILE *out){
    size_t dist_max = 0;
    for(size_t i = 0 ; i< hp->size; i++){
       if(hp->table[i] != NULL){
          char labelon = 1;
          size_t dist = 0;
          do{
-            if(labelon) printf("stringset[%4lu]: ", i);
-                      else printf("          %4s   ", "");
+            if(labelon) fprintf(out, "stringset[%4lu]: ", i);
+                      else fprintf(out, "          %4s   ", "");
             labelon = 0;
-            printf ("%22lu %p->\"%s\"\n",
+            fprintf (out, "%22lu %p->\"%s\"\n",
             //printf ("%22lu %p->\"%s\"",
                (size_t) HASH_FUN(hp->table[i]),
                hp->table[i], hp->table[i] );
@@ -156,10 +159,9 @@ void dump(hashtable *hp){
          dist_max = dist_max > dist ? dist_max : dist;
       }
    }
-   printf ( "load_factor = %.3f\n", (float) hp->len/hp->size);
-   printf ( "bucket_count = %lu\n", hp->size);
-   printf ( "max_bucket_size = %lu\n", dist_max);
-   //printf ( "biggest cluster = %lu\n", dist_max);
+   fprintf (out, "load_factor = %.3f\n", (float) hp->len/hp->size);
+   fprintf (out, "bucket_count = %lu\n", hp->size);
+   fprintf (out, "max_bucket_size = %lu\n", dist_max);
 }
 
 /*

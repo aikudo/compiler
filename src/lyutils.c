@@ -117,7 +117,6 @@ void scanner_include (void) {
       //alloc is on stack so we still need to make a copy
       char *newfilename = strdup (filename);
       assert (newfilename != NULL);
-      printf (";# %d \"%s\"\n", linenr, newfilename);
       scanner_newfilename (newfilename);
       scan_linenr = linenr - 1;
       DEBUGF ('m', "filename=%s, scan_linenr=%d\n",
@@ -134,5 +133,5 @@ void scanner_destroy(void){
 
 
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.3 2014-05-29 19:10:46-07 - - $")
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.4 2014-05-29 20:37:38-07 - - $")
 
