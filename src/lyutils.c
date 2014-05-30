@@ -21,6 +21,11 @@ struct {
    int last_filenr;
 } filename_stack = {NULL, 0, -1};
 
+char *getfilename ( int index ){
+   assert (index <= filename_stack.last_filenr && index >= 0);
+   return filename_stack.filenames[index];
+}
+
 char *scanner_filename (int filenr) {
    assert (filename_stack.filenames != NULL);
    return filename_stack.filenames[filenr];
@@ -129,5 +134,5 @@ void scanner_destroy(void){
 
 
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.2 2014-05-29 12:39:22-07 - - $")
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.3 2014-05-29 19:10:46-07 - - $")
 

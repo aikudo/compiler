@@ -1,5 +1,5 @@
 %{
-// $Id: scanner.l,v 1.3 2014-05-29 00:03:00-07 - - $
+// $Id: scanner.l,v 1.4 2014-05-29 19:10:46-07 - - $
 
 //#include "auxlib.h"
 #include "lyutils.h"
@@ -11,7 +11,6 @@
 %}
 
 %option 8bit
-%option backup
 %option debug
 %option ecs
 %option nodefault
@@ -114,5 +113,5 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 //}
 
 // LINTED(static unused)
-RCSC(SCANNER_L,"$Id: scanner.l,v 1.3 2014-05-29 00:03:00-07 - - $")
+RCSC(SCANNER_L,"$Id: scanner.l,v 1.4 2014-05-29 19:10:46-07 - - $")
 

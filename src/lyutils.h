@@ -37,10 +37,11 @@ int yylval_token (int symbol);
 
 void scanner_include (void);
 void scanner_destroy (void);
+char *getfilename (int);
 
 #define YYSTYPE astree //set to astree instead its default int
 #include "yyparse.h"
 
 // LINTED(static unused)
-RCSH(LYUTILS_H,"$Id: lyutils.h,v 1.3 2014-05-29 12:39:22-07 - - $")
+RCSH(LYUTILS_H,"$Id: lyutils.h,v 1.4 2014-05-29 19:10:46-07 - - $")
 #endif

@@ -8,8 +8,8 @@
 #define ALPHA 4 //loading factor slots/elements = 4
 //#define HASH_INITSZ 1009
 #define HASH_INITSZ 5 
-#define HASH_FUN(STR) (fnvhash64 (STR))
-//#define HASH_FUN(STR) (hhash (STR))
+//#define HASH_FUN(STR) (fnvhash64 (STR))
+#define HASH_FUN(STR) (hhash (STR))
 //#define TSFILE ("/etc/dictionaries-common/words")
 #define TSFILE ("100words")
 
@@ -37,7 +37,10 @@ size_t hhash (const char *string) { //Horner's method
    return hash;
 }
 
+static char *hash_tag = "struct hashtable";
+
 struct hashtable {
+   char *tag;
    char **table;
    size_t len;  // number of actual items
    size_t size; // number of slots
@@ -46,6 +49,7 @@ struct hashtable {
 hashtable *newhash (void) {
    hashtable *hp = malloc( sizeof(struct hashtable) );
    assert(hp != NULL);
+   hp->tag = hash_tag;
    hp->len = 0;
    hp->size = HASH_INITSZ;
    hp->table = calloc( hp->size, sizeof(char *) );
@@ -63,6 +67,8 @@ void delhash (hashtable **hashset) {
 }
 
 char *inserthash (hashtable **hashset, const char *string) {
+   assert (*hashset != NULL);// && *hashset->tag == hashtag );
+   //assert ( **hashset->tag == hashtag );
    //printf("debuging %s\n", string);
    hashtable *hp = *hashset;
    if ( hp->len * ALPHA > hp->size) { 
@@ -156,31 +162,6 @@ void dump(hashtable *hp){
    //printf ( "biggest cluster = %lu\n", dist_max);
 }
 
-void dumphashfile(hashtable *hp, FILE *fp){
-   /*
-   size_t max_dist = 0;
-
-   for(size_t i =0; i < hp->len; ){
-      size_t dist = 1;
-      char printindex = 1;
-      while(hp->table[i++] != NULL){
-         if (printindex) fprintf (fp, "stringset[%4lu]: ", i);
-                    else fprintf (fp, "          %4s   ", "");
-         printindex = 0;
-         fprintf (fp, "%22lu %p->\"%s\"\n",
-               (long unsigned int) HASH_FUN(hp->table[i]),
-               hp->table[i], hp->table[i]);
-         ++dist;
-      }
-      max_dist = max_dist > dist ? max_dist : dist;
-   }
-   fprintf (out, "load_factor = %.3f\n", set.load_factor());
-   fprintf (out, "bucket_count = %lu\n", hp->size);
-   fprintf (out, "max_bucket_size = %lu\n", max_dist);
-      
-   */
-
-}
 /*
 int main (int argc, char **argv) {
    (void) argc;

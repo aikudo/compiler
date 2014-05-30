@@ -1,4 +1,3 @@
-
 #include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -27,7 +26,7 @@ astree new_astree (int symbol, int filenr, int linenr, int offset,
    tree->filenr = filenr;
    tree->linenr = linenr;
    tree->offset = offset;
-   tree->lexinfo = strdup (lexinfo);
+   tree->lexinfo = strdup (lexinfo); //to modify this
    assert (tree->lexinfo != NULL);
    tree->first = NULL;
    tree->last = NULL;
@@ -131,5 +130,5 @@ void freeast (astree root) {
 }
 
 // LINTED(static unused)
-RCSC(ASTREE_C,"$Id: astree.c,v 1.1 2014-05-28 19:42:39-07 - - $")
+RCSC(ASTREE_C,"$Id: astree.c,v 1.2 2014-05-29 19:10:46-07 - - $")
 
