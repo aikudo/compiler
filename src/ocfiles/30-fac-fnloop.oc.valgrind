@@ -1,0 +1,10 @@
+;# 7 "ocfiles/30-fac-fnloop.oc"
+==24552== 
+==24552== HEAP SUMMARY:
+==24552==     in use at exit: 0 bytes in 0 blocks
+==24552==   total heap usage: 356 allocs, 356 frees, 32,611 bytes allocated
+==24552== 
+==24552== All heap blocks were freed -- no leaks are possible
+==24552== 
+==24552== For counts of detected and suppressed errors, rerun with: -v
+==24552== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)
