@@ -1,9 +1,9 @@
 %{
-// $Id: scanner.l,v 1.4 2014-05-29 19:10:46-07 - - $
+// $Id: scanner.l,v 1.7 2014-05-30 23:24:09-07 - - $
 
 //#include "auxlib.h"
 #include "lyutils.h"
-#include "parser.h"
+#include "yyparse.h"
 
 #define YY_USER_ACTION  { scanner_useraction (); }
 #define IGNORE(THING)   { }
@@ -42,13 +42,13 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 \n           { scanner_newline();                   }
 
 
-"[]"         { return yylval_token (TOK_ARRAY);     } 
-"=="         { return yylval_token (TOK_EQ);        } 
-"!="         { return yylval_token (TOK_NE);        } 
-"<="         { return yylval_token (TOK_LE);        } 
-">="         { return yylval_token (TOK_GE);        } 
-"<"          { return yylval_token (TOK_LT);        } 
-">"          { return yylval_token (TOK_GT);        } 
+"[]"         { return yylval_token (ARR);     } 
+"=="         { return yylval_token (EQ);        } 
+"!="         { return yylval_token (NE);        } 
+"<="         { return yylval_token (LE);        } 
+">="         { return yylval_token (GE);        } 
+"<"          { return yylval_token (LT);        } 
+">"          { return yylval_token (GT);        } 
 "("          { return yylval_token ('(');           } 
 ")"          { return yylval_token (')');           } 
 "["          { return yylval_token ('[');           } 
@@ -70,36 +70,36 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 ":"          { return yylval_token (':');           } 
 "&"          { return yylval_token ('&');           } 
 
-"bool"       { return yylval_token (TOK_BOOL);      } 
-"char"       { return yylval_token (TOK_CHAR);      } 
-"chr"        { return yylval_token (TOK_ORD);       } 
-"else"       { return yylval_token (TOK_ELSE);      } 
-"false"      { return yylval_token (TOK_FALSE);     } 
-"if"         { return yylval_token (TOK_IF);        } 
-"int"        { return yylval_token (TOK_INT);       } 
-"new"        { return yylval_token (TOK_NEW);       } 
-"null"       { return yylval_token (TOK_NULL);      } 
-"ord"        { return yylval_token (TOK_ORD);       } 
-"return"     { return yylval_token (TOK_RETURN);    } 
-"string"     { return yylval_token (TOK_STRING);    } 
-"struct"     { return yylval_token (TOK_STRUCT);    } 
-"true"       { return yylval_token (TOK_TRUE);      } 
-"void"       { return yylval_token (TOK_VOID);      } 
-"while"      { return yylval_token (TOK_WHILE);     } 
+"bool"       { return yylval_token (BOOL);      } 
+"char"       { return yylval_token (CHAR);      } 
+"chr"        { return yylval_token (ORD);       } 
+"else"       { return yylval_token (ELSE);      } 
+"false"      { return yylval_token (FALSE);     } 
+"if"         { return yylval_token (IF);        } 
+"int"        { return yylval_token (INT);       } 
+"new"        { return yylval_token (NEW);       } 
+"null"       { return yylval_token (NIL);       } 
+"ord"        { return yylval_token (ORD);       } 
+"return"     { return yylval_token (RETURN);    } 
+"string"     { return yylval_token (STRING);    } 
+"struct"     { return yylval_token (STRUCT);    } 
+"true"       { return yylval_token (TRUE);      } 
+"void"       { return yylval_token (VOID);      } 
+"while"      { return yylval_token (WHILE);     } 
 
-{NUMBER}     { return yylval_token (TOK_INTCON);    }
-{IDENT}      { return yylval_token (TOK_IDENT);     }
-{STR_CONST}  { return yylval_token (TOK_STRINGCON); }
-{CHAR_CONST} { return yylval_token (TOK_CHARCON);   }
+{NUMBER}     { return yylval_token (INTCON);    }
+{IDENT}      { return yylval_token (ID);     }
+{STR_CONST}  { return yylval_token (STRINGCON); }
+{CHAR_CONST} { return yylval_token (CHARCON);   }
 
 {BADIDENT}   { scanner_badtoken (yytext);
-               return yylval_token (TOK_IDENT);     }
+               return yylval_token (ID);     }
 
 {BADCHAR}    { scanner_badtoken (yytext);
-               return yylval_token (TOK_CHARCON);   }
+               return yylval_token (CHARCON);   }
 
 {BADSTR}     { scanner_badtoken (yytext);
-               return yylval_token (TOK_STRINGCON); }
+               return yylval_token (STRINGCON); }
 
 .            { scanner_badchar (*yytext);           }
 
@@ -113,5 +113,5 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 //}
 
 // LINTED(static unused)
-RCSC(SCANNER_L,"$Id: scanner.l,v 1.4 2014-05-29 19:10:46-07 - - $")
+RCSC(SCANNER_L,"$Id: scanner.l,v 1.7 2014-05-30 23:24:09-07 - - $")
 

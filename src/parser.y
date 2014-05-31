@@ -1,5 +1,5 @@
 %{
-// $Id: parser.y,v 1.1 2014-05-28 19:42:39-07 - - $
+// $Id: parser.y,v 1.4 2014-05-30 23:24:09-07 - - $
 
 #include <assert.h>
 #include <stdlib.h>
@@ -25,30 +25,65 @@ static void *yycalloc (size_t size);
 %error-verbose
 %token-table
 
-%token TOK_VOID TOK_BOOL TOK_CHAR TOK_INT TOK_STRING
-%token TOK_IF TOK_ELSE TOK_WHILE TOK_RETURN TOK_STRUCT
-%token TOK_FALSE TOK_TRUE TOK_NULL TOK_NEW TOK_ARRAY
-%token TOK_EQ TOK_NE TOK_LT TOK_LE TOK_GT TOK_GE
-%token TOK_IDENT TOK_INTCON TOK_CHARCON TOK_STRINGCON
+%token VOID BOOL CHAR INT STRING
+%token IF ELSE WHILE RETURN STRUCT
+%token FALSE TRUE NIL NEW ARR
+%token EQ NE LT LE GT GE
+%token ID INTCON CHARCON STRINGCON
 
-%token TOK_BLOCK TOK_CALL TOK_IFELSE TOK_INITDECL
-%token TOK_POS TOK_NEG TOK_NEWARRAY TOK_TYPEID TOK_FIELD
-%token TOK_ORD TOK_CHR TOK_ROOT
+%token BLOCK CALL IFELSE INITDECL
+%token POS NEG NEWARR TYPEID FIELD
+%token ORD CHR ROOT
 
-%start program
+%start start
 
 %%
+start    : program               { yyparse_astree = $1;  }
 
-program : program token | ;
-token   : '(' | ')' | '[' | ']' | '{' | '}' | ';' | ',' | '.'
-        | '=' | '+' | '-' | '*' | '/' | '%' | '!'
-        | TOK_VOID | TOK_BOOL | TOK_CHAR | TOK_INT | TOK_STRING
-        | TOK_IF | TOK_ELSE | TOK_WHILE | TOK_RETURN | TOK_STRUCT
-        | TOK_FALSE | TOK_TRUE | TOK_NULL | TOK_NEW | TOK_ARRAY
-        | TOK_EQ | TOK_NE | TOK_LT | TOK_LE | TOK_GT | TOK_GE
-        | TOK_IDENT | TOK_INTCON | TOK_CHARCON | TOK_STRINGCON
-        | TOK_ORD | TOK_CHR | TOK_ROOT
-        ;
+program  : program structdef     { $$ = adopt1 ($1, $2); }
+         | program func          { $$ = adopt1 ($1, $2); }
+         | program stmt          { $$ = adopt1 ($1, $2); }
+         | program error '}'     { $$ = $1; }
+         | program error ';'     { $$ = $1; }
+         |                       { $$ = new_parseroot(); }
+
+/*'struct' ID '{' [field ';' ]* '}' */
+structdef | STRUCT ID '{' '}'
+
+
+
+fielddecl : basetype ID { /*ID -> FIELD */ }
+          | basetype ARR ID {}
+          ;
+
+
+fdlist   : /* empty */
+         | fdlist
+         | fddlec ';'
+         ;
+
+fddecl   : basetype ID { /*switch ID -> FIELD */ }
+         | basetype ARR ID { /*switch ID -> FIELD */ }
+         ;
+
+basetype : VOID { $$ = $1; }
+         | BOOL { $$ = $1; }
+         | CHAR { $$ = $1; }
+         | INT  { $$ = $1; }
+         | ID   { /*user-defined type */ }
+         ;
+
+identdecl : basetype ID {}
+          | basetype ARR ID {}
+          ;
+
+constant  : INTCON             { $$ = $1; }
+          | CHARCON            { $$ = $1; }
+          | STRINGCON          { $$ = $1; }
+          | FALSE              { $$ = $1; }
+          | TRUE               { $$ = $1; }
+          | NIL                { $$ = $1; }
+          ;
 
 %%
 

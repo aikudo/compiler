@@ -100,7 +100,7 @@ int yylval_token (int symbol) {
 }
 
 astree new_parseroot (void) {
-   yyparse_astree = new_astree (TOK_ROOT, 0, 0, 0, "<<ROOT>>");
+   yyparse_astree = new_astree (ROOT, 0, 0, 0, "<<ROOT>>");
    return yyparse_astree;
 }
 
@@ -133,5 +133,4 @@ void scanner_destroy(void){
 
 
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.4 2014-05-29 20:37:38-07 - - $")
-
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.6 2014-05-30 17:41:14-07 - - $")

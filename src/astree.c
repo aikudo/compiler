@@ -130,5 +130,4 @@ void freeast (astree root) {
 }
 
 // LINTED(static unused)
-RCSC(ASTREE_C,"$Id: astree.c,v 1.2 2014-05-29 19:10:46-07 - - $")
-
+RCSC(ASTREE_C,"$Id: astree.c,v 1.3 2014-05-30 17:24:38-07 - - $")
