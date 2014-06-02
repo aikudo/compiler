@@ -187,4 +187,4 @@ int main (int argc, char **argv) {
 }
 */
 
-/*$Id: stringtable.c,v 1.6 2014-05-30 17:24:38-07 - - $*/
+/*$Id: stringtable.c,v 1.1 2014-06-02 04:56:59-07 - - $*/

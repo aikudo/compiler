@@ -133,4 +133,4 @@ void scanner_destroy(void){
 
 
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.6 2014-05-30 17:41:14-07 - - $")
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.1 2014-06-02 04:56:59-07 - - $")

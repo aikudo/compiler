@@ -1,10 +1,11 @@
 %{
-// $Id: scanner.l,v 1.7 2014-05-30 23:24:09-07 - - $
+// $Id: scanner.l,v 1.1 2014-06-02 04:56:59-07 - - $
 
 //#include "auxlib.h"
 #include "lyutils.h"
 #include "yyparse.h"
 
+#define YY_NO_INPUT 1
 #define YY_USER_ACTION  { scanner_useraction (); }
 #define IGNORE(THING)   { }
 
@@ -88,12 +89,12 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 "while"      { return yylval_token (WHILE);     } 
 
 {NUMBER}     { return yylval_token (INTCON);    }
-{IDENT}      { return yylval_token (ID);     }
+{IDENT}      { return yylval_token (IDENT);     }
 {STR_CONST}  { return yylval_token (STRINGCON); }
 {CHAR_CONST} { return yylval_token (CHARCON);   }
 
 {BADIDENT}   { scanner_badtoken (yytext);
-               return yylval_token (ID);     }
+               return yylval_token (IDENT);     }
 
 {BADCHAR}    { scanner_badtoken (yytext);
                return yylval_token (CHARCON);   }
@@ -113,5 +114,5 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 //}
 
 // LINTED(static unused)
-RCSC(SCANNER_L,"$Id: scanner.l,v 1.7 2014-05-30 23:24:09-07 - - $")
+RCSC(SCANNER_L,"$Id: scanner.l,v 1.1 2014-06-02 04:56:59-07 - - $")
 

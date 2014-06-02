@@ -65,6 +65,11 @@ astree adopt1 (astree root, astree child) {
    return adopt (root, child, NULL);
 }
 
+astree csym (astree root, int symbol) {
+   root->symbol = symbol;
+   return root;
+}
+
 astree adopt1sym (astree root, astree child, int symbol) {
    root = adopt1 (root, child);
    root->symbol = symbol;
@@ -95,8 +100,20 @@ static void dump_astree_rec (FILE *outfile, astree root, int depth) {
    }
 }
 
-void dump_astree (FILE *outfile, astree root) {
-   dump_astree_rec (outfile, root, 0);
+static void print_astree_rec (FILE *outfile, astree root, int depth) {
+   astree child = NULL;
+   if (root == NULL) return;
+   assert (is_astree (root));
+   fprintf (outfile, "%*s%s ", depth * 3, "", get_yytname(root->symbol));
+   fprintf (outfile, "\"%s\" %d.%d.%d\n", root->lexinfo, root->filenr, root->linenr, root->offset);
+   for (child = root->first; child != NULL; child = child->next) {
+      print_astree_rec (outfile, child, depth + 1);
+   }
+}
+
+void dump_astree (FILE *outfile, astree root, char details) {
+   if(details) dump_astree_rec (outfile, root, 0);
+   else print_astree_rec (outfile, root, 0);
    fflush (NULL);
 }
 
@@ -130,4 +147,4 @@ void freeast (astree root) {
 }
 
 // LINTED(static unused)
-RCSC(ASTREE_C,"$Id: astree.c,v 1.3 2014-05-30 17:24:38-07 - - $")
+RCSC(ASTREE_C,"$Id: astree.c,v 1.1 2014-06-02 04:56:59-07 - - $")

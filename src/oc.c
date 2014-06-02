@@ -75,6 +75,8 @@ void scanopts(int argc, char **argv){
       }
    }
 
+   cppdef = NULL;
+
    if (optind >= argc) {
       errprintf ("Usage: %s [-ly] [filename]\n", get_execname());
       exit (get_exitstatus());
@@ -128,12 +130,17 @@ void addtokens(astree token){
 void scanfile(void){
    extern astree yylval;
    hashtable *stringset = gblinfo.stringset;
+   (void) yylval;
+   (void) stringset;
+   yyparse();
+   /*
    while( yylex() != YYEOF ){
       char *istr = inserthash(&stringset, yylval->lexinfo);
       free(yylval->lexinfo);
       yylval->lexinfo = istr;
       addtokens(yylval);
    }
+   */
 }
 
 void dumpstr(void){
@@ -201,11 +208,13 @@ int main (int argc, char** argv) {
    scanopts(argc, argv);
    gblinfo.stringset = newhash();
    scanfile();
-   dumpstr();
-   dumptok();
+//   dumpstr();
+//   dumptok();
 
-   destroy_all();
+dump_astree (stdout, yyparse_astree, 0);
+
+//   destroy_all();
    return 0;
 }
 
-RCSC(OC_C,"$Id: oc.c,v 1.6 2014-05-30 17:14:13-07 - - $")
+RCSC(OC_C,"$Id: oc.c,v 1.1 2014-06-02 04:56:59-07 - - $")
