@@ -33,6 +33,7 @@ void scanner_setecho (bool echoflag);
 void scanner_useraction (void);
 
 astree new_parseroot (void);
+astree clone (astree src, int symbol);
 int yylval_token (int symbol);
 
 void scanner_include (void);
@@ -43,5 +44,5 @@ char *getfilename (int);
 #include "yyparse.h"
 
 // LINTED(static unused)
-RCSH(LYUTILS_H,"$Id: lyutils.h,v 1.1 2014-06-02 04:56:59-07 - - $")
+RCSH(LYUTILS_H,"$Id: lyutils.h,v 1.2 2014-06-02 17:44:24-07 - - $")
 #endif

@@ -75,8 +75,6 @@ void scanopts(int argc, char **argv){
       }
    }
 
-   cppdef = NULL;
-
    if (optind >= argc) {
       errprintf ("Usage: %s [-ly] [filename]\n", get_execname());
       exit (get_exitstatus());
@@ -217,4 +215,4 @@ dump_astree (stdout, yyparse_astree, 0);
    return 0;
 }
 
-RCSC(OC_C,"$Id: oc.c,v 1.1 2014-06-02 04:56:59-07 - - $")
+RCSC(OC_C,"$Id: oc.c,v 1.2 2014-06-02 17:44:24-07 - - $")

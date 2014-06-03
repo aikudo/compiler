@@ -57,6 +57,10 @@ astree adopt (astree root, ...) {
    return root;
 }
 
+astree adopt3 (astree root, astree left, astree middle, astree right) {
+   return adopt (root, left, middle, right, NULL);
+}
+
 astree adopt2 (astree root, astree left, astree right) {
    return adopt (root, left, right, NULL);
 }
@@ -147,4 +151,4 @@ void freeast (astree root) {
 }
 
 // LINTED(static unused)
-RCSC(ASTREE_C,"$Id: astree.c,v 1.1 2014-06-02 04:56:59-07 - - $")
+RCSC(ASTREE_C,"$Id: astree.c,v 1.2 2014-06-02 17:44:24-07 - - $")

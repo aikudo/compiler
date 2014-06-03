@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2014-06-02 04:56:59-07 - - $
+# $Id: Makefile,v 1.3 2014-06-02 17:44:24-07 - - $
 
 MKFILE    = Makefile
 DEPSFILE  = ${MKFILE}.deps
@@ -67,13 +67,13 @@ ${CLGEN} : ${LSOURCES}
 # Build the parser.
 #
 ${CYGEN} ${HYGEN} : ${YSOURCES}
-	bison --verbose --defines=${HYGEN} --output=${CYGEN} ${YSOURCES} --report-file=${YREPORT}
+	bison -d --verbose --defines=${HYGEN} --output=${CYGEN} ${YSOURCES} --report-file=${YREPORT}
 
 #
 # Check sources into an RCS subdirectory.
 #
 ci : ${ALLSRC} ${TESTINS}
-	cid + ${ALLSRC} ${TESTINS} test?.inh
+	cid + ${ALLSRC} ${TESTINS} 
 	git add ${ALLSRC} -A
 
 #

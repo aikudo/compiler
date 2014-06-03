@@ -13,6 +13,7 @@ astree new_astree (int symbol, int filenr, int linenr, int offset,
 astree adopt (astree root, /*ASTree*/ ... /*, NULL */);
 astree adopt1 (astree root, astree child);
 astree adopt2 (astree root, astree left, astree right);
+astree adopt3 (astree root, astree left, astree middle, astree right);
 astree adopt1sym (astree root, astree child, int symbol);
 astree csym (astree root, int symbol);
 void dump_astree (FILE *outfile, astree root, char details);
@@ -22,5 +23,5 @@ void freeast (astree tree);
 #define freeast2(T1,T2) { freeast (T1); freeast (T2); }
 
 // LINTED(static unused)
-RCSH(ASTREE_H,"$Id: astree.h,v 1.1 2014-06-02 04:56:59-07 - - $")
+RCSH(ASTREE_H,"$Id: astree.h,v 1.2 2014-06-02 17:44:24-07 - - $")
 #endif

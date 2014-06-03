@@ -104,6 +104,25 @@ astree new_parseroot (void) {
    return yyparse_astree;
 }
 
+astree clone (astree src, int symbol) {
+   astree clone;
+   switch (symbol){
+   case ROOT:
+      clone = new_astree (symbol, src->filenr, 
+            src->linenr, src->offset, "<<ROOT>>");
+      break;
+   case PROTOTYPE:
+      clone = new_astree (symbol, src->filenr, 
+            src->linenr, src->offset, "<<PROTOTYPE>>");
+      break;
+   case FUNCTION:
+      clone = new_astree (symbol, src->filenr, 
+            src->linenr, src->offset, "<<FUNCTION>>");
+      break;
+   }
+   return clone;
+}
+
 
 void scanner_include (void) {
    scanner_newline();
@@ -133,4 +152,4 @@ void scanner_destroy(void){
 
 
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.1 2014-06-02 04:56:59-07 - - $")
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.2 2014-06-02 17:44:24-07 - - $")
