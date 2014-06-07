@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2014-06-06 18:49:21-07 - - $
+# $Id: Makefile,v 1.2 2014-06-06 22:43:02-07 - - $
 
 MKFILE    = Makefile
 DEPSFILE  = ${MKFILE}.deps
@@ -9,8 +9,8 @@ VALGRIND  = valgrind --leak-check=full --show-reachable=yes
 #
 # Definitions of list of files:
 #
-HSOURCES  = astree.h lyutils.h auxlib.h stringtable.h hashstack.h
-CSOURCES  = astree.c lyutils.c auxlib.c stringtable.c oc.c hashstack.c
+HSOURCES  = astree.h lyutils.h auxlib.h stringtable.h hashstack.h symtable.h
+CSOURCES  = astree.c lyutils.c auxlib.c stringtable.c oc.c hashstack.c symtable.c
 LSOURCES  = scanner.l
 YSOURCES  = parser.y
 ETCSRC    = README ${MKFILE} ${DEPSFILE}

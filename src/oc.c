@@ -10,6 +10,7 @@
 #include "stringtable.h"
 #include "auxlib.h"
 #include "lyutils.h"
+#include "symtable.h"
 #define CPP "/usr/bin/cpp"
 #define BUFFSZ 256
 
@@ -172,9 +173,10 @@ int main (int argc, char** argv) {
    gblinfo.stringset = stringset;
    yyparse();
    dumpfiles();
+   buildsym();
    print_hashstack ( identstack, stdout, 1);
 
    return 0;
 }
 
-RCSC(OC_C,"$Id: oc.c,v 1.2 2014-06-06 22:01:08-07 - - $")
+RCSC(OC_C,"$Id: oc.c,v 1.3 2014-06-06 22:43:02-07 - - $")

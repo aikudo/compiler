@@ -4,8 +4,6 @@
 
 #define HASH_NEW_SIZE 15
 #define HSZ  1000
-//let use a chaining hash table instead of linear probing like in stringset
-//
 
 hashstack *newhashstack (void) {
    hashstack *this = calloc(1, sizeof (struct hashstack));
@@ -31,18 +29,14 @@ hsnode* find_hashstack (hashstack *this, const char *item){
 }
 
 
-
 hsnode* add_hashstack (hashstack *this, const char *item) {
    DEBUGF ('H', "adding %p %s\n", this, item);
    assert (this != NULL && item != NULL);
-
-   //hsnode *found; 
-   hsnode *found;
+   hsnode *found; //no dup hash
    if ( (found = find_hashstack(this, item) ) != NULL ) return found;
-
    size_t sz = this->size;
    size_t newsz = this->size * 2 + 1;
-   uintptr_t hashcode = (uintptr_t) item;
+   uintptr_t hashcode;
    size_t i;
    if(this->load * 2 > sz){
       hsnode **oldchain = this->chains;
@@ -62,7 +56,7 @@ hsnode* add_hashstack (hashstack *this, const char *item) {
       this->size = newsz;
       free(oldchain);
    }
-   hashcode  %= this->size;
+   hashcode  = (uintptr_t) item % this->size;
    hsnode *node = calloc(1, sizeof(hsnode));
    node->lexeme = item;
    node->link = this->chains[hashcode];
@@ -70,8 +64,6 @@ hsnode* add_hashstack (hashstack *this, const char *item) {
    this->load++;
    return node;
 }
-
-
 
 void print_hashstack (hashstack *this, FILE *out, char detail) {
    size_t i;
@@ -82,8 +74,8 @@ void print_hashstack (hashstack *this, FILE *out, char detail) {
       int len = 0;
       while(list){
          if(detail)
-            fprintf(out, "array[%10lu] = %12p rad:%lu \"%s\"\n",
-                  i, list->lexeme, (uintptr_t) list->lexeme%this->size, list->lexeme);
+            fprintf(out, "array[%10lu] = %12p   \"%s\"\n",
+                  i, list->lexeme, list->lexeme);
          list = list->link;
          len++;
       }
@@ -97,6 +89,6 @@ void print_hashstack (hashstack *this, FILE *out, char detail) {
          fprintf(out, "%10d chains of size%3lu\n", histo[i], i );
    }
 }
-//void dumphashstack(hashstack *this, FILE out);
 
-RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.2 2014-06-06 22:01:08-07 - - $")
+
+RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.3 2014-06-06 22:43:02-07 - - $")
