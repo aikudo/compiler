@@ -17,7 +17,7 @@ bool is_astree (void *object) {
 }
 
 astree new_astree (int symbol, int filenr, int linenr, int offset,
-                   char *lexinfo) {
+                   char *lexeme) {
    size_t size = sizeof (struct astree_rep);
    astree tree = malloc (size);
    assert (tree != NULL);
@@ -26,14 +26,14 @@ astree new_astree (int symbol, int filenr, int linenr, int offset,
    tree->filenr = filenr;
    tree->linenr = linenr;
    tree->offset = offset;
-   tree->lexinfo = strdup (lexinfo); //to modify this
-   assert (tree->lexinfo != NULL);
+   tree->lexeme = lexeme;
+   tree->attrib = NULL;
    tree->first = NULL;
    tree->last = NULL;
    tree->next = NULL;
    DEBUGF ('f', "malloc (%d) = %p-> %d:%d.%d: %s: %p->\"%s\"\n",
            size, tree, tree->filenr, tree->linenr, tree->offset,
-           get_yytname (tree->symbol), tree->lexinfo, tree->lexinfo);
+           get_yytname (tree->symbol), tree->lexeme, tree->lexeme);
    return tree;
 }
 
@@ -50,8 +50,8 @@ astree adopt (astree root, ...) {
                          else root->last->next = child;
       root->last = child;
       DEBUGF ('a', "%p (%s) adopting %p (%s)\n",
-              root, root->lexinfo,
-              child, child->lexinfo);
+              root, root->lexeme,
+              child, child->lexeme);
    }
    va_end (children);
    return root;
@@ -86,7 +86,7 @@ static void dump_node (FILE *outfile, astree node, int depth) {
    fprintf (outfile, "%p-> astree {%s(%d), %d:%d.%03d, %p->\"%s\",\n",
              (void*) node, get_yytname (node->symbol), node->symbol,
              node->filenr, node->linenr, node->offset,
-             node->lexinfo, node->lexinfo);
+             node->lexeme, node->lexeme);
    fprintf (outfile, "%*sfirst=%p, last=%p, next=%p}",
              depth * 3 + 12, "", (void*) node->first,
              (void*) node->last, (void*) node->next);
@@ -96,7 +96,7 @@ static void dump_astree_rec (FILE *outfile, astree root, int depth) {
    astree child = NULL;
    if (root == NULL) return;
    assert (is_astree (root));
-   fprintf (outfile, "%*s%s ", depth * 3, "", root->lexinfo);
+   fprintf (outfile, "%*s%s ", depth * 3, "", root->lexeme);
    dump_node (outfile, root, depth);
    fprintf (outfile, "\n");
    for (child = root->first; child != NULL; child = child->next) {
@@ -109,7 +109,8 @@ static void print_astree_rec (FILE *outfile, astree root, int depth) {
    if (root == NULL) return;
    assert (is_astree (root));
    fprintf (outfile, "%*s%s ", depth * 3, "", get_yytname(root->symbol));
-   fprintf (outfile, "\"%s\" %d.%d.%d\n", root->lexinfo, root->filenr, root->linenr, root->offset);
+   fprintf (outfile, "\"%s\" %d.%d.%d\n",
+         root->lexeme, root->filenr, root->linenr, root->offset);
    for (child = root->first; child != NULL; child = child->next) {
       print_astree_rec (outfile, child, depth + 1);
    }
@@ -144,11 +145,10 @@ void freeast (astree root) {
    }
    DEBUGF ('f', "free [%X]-> %d:%d.%d: %s: %p->\"%s\")\n",
            (uintptr_t) root, root->filenr, root->linenr, root->offset,
-            get_yytname (root->symbol), root->lexinfo, root->lexinfo);
-   free (root->lexinfo);
+            get_yytname (root->symbol), root->lexeme, root->lexeme);
    memset (root, 0, sizeof (struct astree_rep));
    free (root);
 }
 
 // LINTED(static unused)
-RCSC(ASTREE_C,"$Id: astree.c,v 1.2 2014-06-02 17:44:24-07 - - $")
+RCSC(ASTREE_C,"$Id: astree.c,v 1.3 2014-06-06 18:10:37-07 - - $")

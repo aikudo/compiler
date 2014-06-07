@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 
+#include "stringtable.h"
 #include "astree.h"
 #include "auxlib.h"
 
@@ -18,6 +19,7 @@ extern char *yytext;
 extern int yy_flex_debug;
 extern int yydebug;
 extern int yyleng;
+extern hashtable *stringset;
 
 int yylex (void);
 int yyparse (void);
@@ -39,10 +41,11 @@ int yylval_token (int symbol);
 void scanner_include (void);
 void scanner_destroy (void);
 char *getfilename (int);
+void dumptok(FILE *);
 
 #define YYSTYPE astree //set to astree instead its default int
 #include "yyparse.h"
 
 // LINTED(static unused)
-RCSH(LYUTILS_H,"$Id: lyutils.h,v 1.2 2014-06-02 17:44:24-07 - - $")
+RCSH(LYUTILS_H,"$Id: lyutils.h,v 1.3 2014-06-06 18:10:37-07 - - $")
 #endif

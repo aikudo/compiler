@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include "hashstack.h"
 #include "auxlib.h"
 
 typedef struct astree_rep *astree;
@@ -23,5 +24,5 @@ void freeast (astree tree);
 #define freeast2(T1,T2) { freeast (T1); freeast (T2); }
 
 // LINTED(static unused)
-RCSH(ASTREE_H,"$Id: astree.h,v 1.2 2014-06-02 17:44:24-07 - - $")
+RCSH(ASTREE_H,"$Id: astree.h,v 1.3 2014-06-06 18:10:37-07 - - $")
 #endif

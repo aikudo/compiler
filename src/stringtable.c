@@ -1,10 +1,6 @@
-#include<assert.h>
-#include<time.h>
-#include<stdlib.h>
-#include<stdio.h>
-#include<string.h>
-#include<stdint.h> //C99
+
 #include"stringtable.h"
+
 #define ALPHA 4 //loading factor slots/elements = 4
 //#define HASH_INITSZ 1009
 #define HASH_INITSZ 5 
@@ -187,4 +183,4 @@ int main (int argc, char **argv) {
 }
 */
 
-/*$Id: stringtable.c,v 1.1 2014-06-02 04:56:59-07 - - $*/
+RCSC(STRINGTABLE_C,"$Id: stringtable.c,v 1.2 2014-06-06 16:42:24-07 - - $")
