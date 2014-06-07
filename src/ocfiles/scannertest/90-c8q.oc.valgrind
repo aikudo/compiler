@@ -1,0 +1,10 @@
+#element 24 double 95 -> 191
+==24615== 
+==24615== HEAP SUMMARY:
+==24615==     in use at exit: 0 bytes in 0 blocks
+==24615==   total heap usage: 317 allocs, 317 frees, 29,301 bytes allocated
+==24615== 
+==24615== All heap blocks were freed -- no leaks are possible
+==24615== 
+==24615== For counts of detected and suppressed errors, rerun with: -v
+==24615== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)

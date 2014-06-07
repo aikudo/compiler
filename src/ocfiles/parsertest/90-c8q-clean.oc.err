@@ -1,0 +1,14 @@
+oc: 90-c8q-clean.oc: 1: syntax error, unexpected '[', expecting '=' or '('
+CAUGHT ERROR ;
+oc: 90-c8q-clean.oc: 3: syntax error, unexpected '{'
+CAUGHT ERROR ;
+oc: 90-c8q-clean.oc: 5: syntax error, unexpected ';'
+CAUGHT ERROR ;
+oc: 90-c8q-clean.oc: 5: syntax error, unexpected $undefined
+CAUGHT ERROR ;
+CAUGHT ERROR ;
+CAUGHT ERROR }
+oc: 90-c8q-clean.oc: 10: syntax error, unexpected '{'
+CAUGHT ERROR ;
+oc: 90-c8q-clean.oc: 13: syntax error, unexpected '}'
+CAUGHT ERROR }

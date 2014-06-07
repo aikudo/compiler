@@ -1,0 +1,10 @@
+;# 4 "ocfiles/07-assert.oc"
+==24489== 
+==24489== HEAP SUMMARY:
+==24489==     in use at exit: 0 bytes in 0 blocks
+==24489==   total heap usage: 258 allocs, 258 frees, 27,913 bytes allocated
+==24489== 
+==24489== All heap blocks were freed -- no leaks are possible
+==24489== 
+==24489== For counts of detected and suppressed errors, rerun with: -v
+==24489== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)

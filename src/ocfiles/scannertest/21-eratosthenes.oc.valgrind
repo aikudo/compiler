@@ -1,0 +1,10 @@
+#element 48 double 191 -> 383
+==24538== 
+==24538== HEAP SUMMARY:
+==24538==     in use at exit: 0 bytes in 0 blocks
+==24538==   total heap usage: 469 allocs, 469 frees, 38,975 bytes allocated
+==24538== 
+==24538== All heap blocks were freed -- no leaks are possible
+==24538== 
+==24538== For counts of detected and suppressed errors, rerun with: -v
+==24538== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)

@@ -1,0 +1,10 @@
+;# 4 "ocfiles/11-numbers.oc"
+==24503== 
+==24503== HEAP SUMMARY:
+==24503==     in use at exit: 0 bytes in 0 blocks
+==24503==   total heap usage: 294 allocs, 294 frees, 28,929 bytes allocated
+==24503== 
+==24503== All heap blocks were freed -- no leaks are possible
+==24503== 
+==24503== For counts of detected and suppressed errors, rerun with: -v
+==24503== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)

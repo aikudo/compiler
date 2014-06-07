@@ -1,0 +1,10 @@
+;# 1 "ocfiles/00-trivial.oc"
+==24454== 
+==24454== HEAP SUMMARY:
+==24454==     in use at exit: 0 bytes in 0 blocks
+==24454==   total heap usage: 17 allocs, 17 frees, 17,111 bytes allocated
+==24454== 
+==24454== All heap blocks were freed -- no leaks are possible
+==24454== 
+==24454== For counts of detected and suppressed errors, rerun with: -v
+==24454== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)

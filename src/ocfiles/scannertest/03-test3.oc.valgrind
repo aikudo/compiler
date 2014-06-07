@@ -1,0 +1,10 @@
+;# 4 "ocfiles/03-test3.oc"
+==24468== 
+==24468== HEAP SUMMARY:
+==24468==     in use at exit: 0 bytes in 0 blocks
+==24468==   total heap usage: 278 allocs, 278 frees, 28,502 bytes allocated
+==24468== 
+==24468== All heap blocks were freed -- no leaks are possible
+==24468== 
+==24468== For counts of detected and suppressed errors, rerun with: -v
+==24468== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)

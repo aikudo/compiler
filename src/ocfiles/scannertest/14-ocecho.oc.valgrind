@@ -1,0 +1,10 @@
+;# 4 "ocfiles/14-ocecho.oc"
+==24524== 
+==24524== HEAP SUMMARY:
+==24524==     in use at exit: 0 bytes in 0 blocks
+==24524==   total heap usage: 327 allocs, 327 frees, 29,749 bytes allocated
+==24524== 
+==24524== All heap blocks were freed -- no leaks are possible
+==24524== 
+==24524== For counts of detected and suppressed errors, rerun with: -v
+==24524== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)

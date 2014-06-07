@@ -1,0 +1,14 @@
+oc: 90-c8q.oc: 1: syntax error, unexpected '[', expecting '=' or '('
+CAUGHT ERROR ;
+oc: 90-c8q.oc: 1: syntax error, unexpected '{'
+CAUGHT ERROR ;
+oc: 90-c8q.oc: 2: syntax error, unexpected ';'
+CAUGHT ERROR ;
+oc: 90-c8q.oc: 2: syntax error, unexpected $undefined
+CAUGHT ERROR ;
+CAUGHT ERROR ;
+CAUGHT ERROR }
+oc: 90-c8q.oc: 4: syntax error, unexpected '{'
+CAUGHT ERROR ;
+oc: 90-c8q.oc: 4: syntax error, unexpected '}'
+CAUGHT ERROR }

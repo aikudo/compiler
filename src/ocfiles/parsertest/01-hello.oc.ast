@@ -1,0 +1,4 @@
+ROOT "<<ROOT>>" 0.0.0
+   CALL "(" 4.6.5
+      IDENT "puts" 4.6.0
+      STRINGCON ""Hello, world!\n"" 4.6.6

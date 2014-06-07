@@ -1,0 +1,7 @@
+ROOT "<<ROOT>>" 0.0.0
+   STRUCT "struct" 4.5.0
+      TYPEID "foo" 4.5.7
+      INT "int" 4.6.3
+         FIELD "a" 4.6.7
+      BOOL "bool" 4.7.3
+         FIELD "b" 4.7.8

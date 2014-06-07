@@ -1,0 +1,14 @@
+96-unterminated.oc:5:12: warning: missing terminating " character [enabled by default]
+96-unterminated.oc:6:10: warning: missing terminating ' character [enabled by default]
+96-unterminated.oc:7:5: warning: missing terminating " character [enabled by default]
+96-unterminated.oc:8:5: warning: missing terminating " character [enabled by default]
+oc: 96-unterminated.oc: 4: invalid token ("\*/")
+oc: 96-unterminated.oc: 5: invalid token ("abc;)
+oc: 96-unterminated.oc: 6: syntax error, unexpected CHAR
+oc: 96-unterminated.oc: 6: invalid token ('a)
+CAUGHT ERROR ;
+oc: 96-unterminated.oc: 7: invalid token ("abcd\";)
+oc: 96-unterminated.oc: 8: syntax error, unexpected IDENT
+oc: 96-unterminated.oc: 8: invalid token ("abc|;)
+oc: 96-unterminated.oc: 10: invalid token (23foobar)
+CAUGHT ERROR ;

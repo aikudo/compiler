@@ -1,0 +1,6 @@
+ROOT "<<ROOT>>" 0.0.0
+   CALL "(" 4.4.7
+      IDENT "assert" 4.4.0
+      EQ "==" 4.4.15
+         STRINGCON ""null"" 4.4.8
+         NIL "null" 4.4.18

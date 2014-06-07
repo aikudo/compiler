@@ -1,0 +1,7 @@
+ROOT "<<ROOT>>" 0.0.0
+   VARDECL "=" 2.4.9
+      STRING "string" 2.4.0
+         DECLID "t" 2.4.7
+      STRINGCON ""\*/"" 2.4.11
+   CHARCON "'a" 2.6.9
+   IDENT "23foobar" 2.10.4

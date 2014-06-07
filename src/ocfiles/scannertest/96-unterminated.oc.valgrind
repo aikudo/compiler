@@ -1,0 +1,10 @@
+oc: ocfiles/96-unterminated.oc: 10: invalid token (23foobar)
+==24658== 
+==24658== HEAP SUMMARY:
+==24658==     in use at exit: 0 bytes in 0 blocks
+==24658==   total heap usage: 83 allocs, 83 frees, 20,386 bytes allocated
+==24658== 
+==24658== All heap blocks were freed -- no leaks are possible
+==24658== 
+==24658== For counts of detected and suppressed errors, rerun with: -v
+==24658== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 4 from 4)
