@@ -1,5 +1,5 @@
 %{
-// $Id: parser.y,v 1.1 2014-06-06 18:49:21-07 - - $
+// $Id: parser.y,v 1.2 2014-06-07 15:58:10-07 - - $
 
 #include <assert.h>
 #include <stdlib.h>
@@ -28,7 +28,7 @@ static void *yycalloc (size_t size);
 
 %token VOID BOOL CHAR INT STRING
 %token IF ELSE WHILE RETURN STRUCT
-%token FALSE TRUE NIL NEW ARR
+%token FALSE TRUE NIL NEW ARRAY
 %token EQ NE LT LE GT GE
 %token IDENT INTCON CHARCON STRINGCON
 
@@ -74,7 +74,7 @@ fieldlist : STRUCT IDENT '{' fielddecl ';'  { $$ = adopt2 ($1, csym($2,TYPEID), 
           ;
 
 fielddecl : basetype IDENT                  { $$ = adopt1 ($1, csym($2,FIELD)); }
-          | basetype ARR IDENT              { $$ = adopt2 ($2, $1, csym($3,FIELD)); }
+          | basetype ARRAY IDENT            { $$ = adopt2 ($2, $1, csym($3,FIELD)); }
           ;
 
 basetype : VOID   { $$ = $1;}
@@ -118,8 +118,8 @@ blocklist : '{' statement       { $$ = adopt1( csym($1, BLOCK), $2); }
           | blocklist statement { $$ = adopt1($1, $2); }
           ;
 
-identdecl : basetype IDENT     { $$ = adopt1 ($1, csym($2, DECLID) ); }
-          | basetype ARR IDENT { $$ = adopt2 ($2, $1, csym($3, DECLID) ); }
+identdecl : basetype IDENT       { $$ = adopt1 ($1, csym($2, DECLID) ); }
+          | basetype ARRAY IDENT { $$ = adopt2 ($2, $1, csym($3, DECLID) ); }
           ;
 
 vardecl : identdecl '=' expr ';'     { $$ = adopt2( csym($2, VARDECL), $1, $3) ;}

@@ -17,10 +17,10 @@ hashstack *newhashstack (void) {
    return this;
 }
 
-hsnode* find_hashstack (hashstack *this, const char *item){
+hsnode find_hashstack (hashstack *this, const char *item){
    assert (this != NULL && item != NULL);
    uintptr_t hashcode = (uintptr_t) item % this->size;
-   hsnode *list = this->chains[hashcode];
+   hsnode list = this->chains[hashcode];
    while(list){
       if(list->lexeme == item) break;
       else list = list->link;
@@ -29,21 +29,21 @@ hsnode* find_hashstack (hashstack *this, const char *item){
 }
 
 
-hsnode* add_hashstack (hashstack *this, const char *item) {
+hsnode add_hashstack (hashstack *this, const char *item) {
    DEBUGF ('H', "adding %p %s\n", this, item);
    assert (this != NULL && item != NULL);
-   hsnode *found; //no dup hash
+   hsnode found; //no dup hash
    if ( (found = find_hashstack(this, item) ) != NULL ) return found;
    size_t sz = this->size;
    size_t newsz = this->size * 2 + 1;
    uintptr_t hashcode;
    size_t i;
    if(this->load * 2 > sz){
-      hsnode **oldchain = this->chains;
-      hsnode **newchain = calloc(newsz, sizeof(hsnode *));
+      hsnode *oldchain = this->chains;
+      hsnode *newchain = calloc(newsz, sizeof(hsnode));
       for(i = 0 ; i < sz; ++i){
-         hsnode *list = oldchain[i];
-         hsnode *curr;
+         hsnode list = oldchain[i];
+         hsnode curr;
          while(list){
             curr = list;
             list = list->link;
@@ -57,7 +57,7 @@ hsnode* add_hashstack (hashstack *this, const char *item) {
       free(oldchain);
    }
    hashcode  = (uintptr_t) item % this->size;
-   hsnode *node = calloc(1, sizeof(hsnode));
+   hsnode node = calloc(1, sizeof(struct hsnode));
    node->lexeme = item;
    node->link = this->chains[hashcode];
    this->chains[hashcode] = node;
@@ -70,7 +70,7 @@ void print_hashstack (hashstack *this, FILE *out, char detail) {
    unsigned histo[HSZ];
    for(i = 0; i<HSZ; i++) histo[i] = 0;
    for(i = 0; i < this->size ; ++i){
-      hsnode *list = this->chains[i];
+      hsnode list = this->chains[i];
       int len = 0;
       while(list){
          if(detail)
@@ -91,4 +91,4 @@ void print_hashstack (hashstack *this, FILE *out, char detail) {
 }
 
 
-RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.3 2014-06-06 22:43:02-07 - - $")
+RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.4 2014-06-07 15:58:10-07 - - $")

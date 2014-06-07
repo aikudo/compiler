@@ -1,4 +1,4 @@
-# Makefile.deps created Fri Jun  6 21:52:41 PDT 2014 by make
+# Makefile.deps created Sat Jun  7 15:51:20 PDT 2014 by make
 astree.o: astree.c astree.h hashstack.h auxlib.h astree.rep.h lyutils.h \
  stringtable.h yyparse.h
 lyutils.o: lyutils.c astree.rep.h astree.h hashstack.h auxlib.h lyutils.h \
@@ -6,8 +6,10 @@ lyutils.o: lyutils.c astree.rep.h astree.h hashstack.h auxlib.h lyutils.h \
 auxlib.o: auxlib.c auxlib.h
 stringtable.o: stringtable.c stringtable.h auxlib.h
 oc.o: oc.c astree.h hashstack.h auxlib.h astree.rep.h stringtable.h \
- lyutils.h yyparse.h
+ lyutils.h yyparse.h symtable.h
 hashstack.o: hashstack.c hashstack.h auxlib.h
+symtable.o: symtable.c astree.rep.h astree.h hashstack.h auxlib.h \
+ symtable.h lyutils.h stringtable.h yyparse.h
 yylex.o: yylex.c lyutils.h stringtable.h auxlib.h astree.h hashstack.h \
  yyparse.h
 yyparse.o: yyparse.c lyutils.h stringtable.h auxlib.h astree.h \

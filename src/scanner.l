@@ -1,5 +1,5 @@
 %{
-// $Id: scanner.l,v 1.1 2014-06-06 18:49:21-07 - - $
+// $Id: scanner.l,v 1.2 2014-06-07 15:58:10-07 - - $
 
 //#include "auxlib.h"
 #include "lyutils.h"
@@ -43,7 +43,7 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 \n           { scanner_newline();                   }
 
 
-"[]"         { return yylval_token (ARR);     } 
+"[]"         { return yylval_token (ARRAY);     } 
 "=="         { return yylval_token (EQ);        } 
 "!="         { return yylval_token (NE);        } 
 "<="         { return yylval_token (LE);        } 
@@ -114,5 +114,5 @@ BADCHAR         {MISSQUOTECHR}|{BADESCAPECHR}
 //}
 
 // LINTED(static unused)
-RCSC(SCANNER_L,"$Id: scanner.l,v 1.1 2014-06-06 18:49:21-07 - - $")
+RCSC(SCANNER_L,"$Id: scanner.l,v 1.2 2014-06-07 15:58:10-07 - - $")
 

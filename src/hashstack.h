@@ -7,13 +7,13 @@
 #include <assert.h>
 #include "auxlib.h"
 
-typedef struct hsnode hsnode;
+typedef struct hsnode *hsnode;
 typedef struct hashstack{
    size_t size;            //number of slots
    size_t load;            //number of elements
-   hsnode **chains;
-   hsnode *stack;          //itemifier stackA
-   hsnode *gblhead;        //ptr to global stack block
+   hsnode *chains;
+   hsnode stack;          //itemifier stackA
+   hsnode gblhead;        //ptr to global stack block
 }hashstack;
 
 struct hsnode{
@@ -54,11 +54,11 @@ struct hsnode{
 void print_hashstack (hashstack *this, FILE *out, char detail);
 hashstack *newhashstack (void);
 
-hsnode* add_hashstack (hashstack *this, const char *item);
-hsnode* find_hashstack (hashstack *this, const char *item);
-hsnode* rm_hashstack (hashstack *this, const char *item);
+hsnode add_hashstack (hashstack *this, const char *item);
+hsnode find_hashstack (hashstack *this, const char *item);
+hsnode rm_hashstack (hashstack *this, const char *item);
 
-hsnode* push_hashstack (hashstack *this, const hsnode *item);
-hsnode* pop_hashstack (hashstack *this);
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.2 2014-06-06 22:01:08-07 - - $")
+hsnode push_hashstack (hashstack *this, const hsnode *item);
+hsnode pop_hashstack (hashstack *this);
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.3 2014-06-07 15:58:10-07 - - $")
 #endif
