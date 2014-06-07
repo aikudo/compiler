@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <errno.h>
 #include "astree.rep.h"
 #include "lyutils.h"
 #include "auxlib.h"
@@ -20,6 +20,27 @@ struct {
    int size;
    int last_filenr;
 } filename_stack = {NULL, 0, -1};
+
+struct {
+   astree *tokens;
+   int size;
+   int last;
+} token_list = {NULL, 0 , -1};
+
+void addtokens(astree token){
+   assert(token != NULL);
+   if (token_list.tokens == NULL) {
+      token_list.size = 16;
+      token_list.tokens = malloc (token_list.size * sizeof (astree));
+      assert (token_list.tokens != NULL);
+   }else if (token_list.last == token_list.size - 1){
+      token_list.size *= 2;
+      token_list.tokens = realloc (token_list.tokens,
+                              token_list.size * sizeof(astree));
+      assert (token_list.tokens != NULL);
+   }
+   token_list.tokens[++token_list.last] = token;
+}
 
 char *getfilename ( int index ){
    assert (index <= filename_stack.last_filenr && index >= 0);
@@ -92,16 +113,38 @@ void scanner_badtoken (char *lexeme) {
               scan_linenr, lexeme);
 }
 
+//all scanned tokens are sent to this function. marker HERE
 int yylval_token (int symbol) {
    int offset = scan_offset - yyleng;
+   char *lexeme = inserthash(&stringset, yytext);
    yylval = new_astree (symbol, filename_stack.last_filenr,
-                        scan_linenr, offset, yytext);
+                        scan_linenr, offset, lexeme);
+   addtokens(yylval);
    return symbol;
 }
 
 astree new_parseroot (void) {
-   yyparse_astree = new_astree (TOK_ROOT, 0, 0, 0, "<<ROOT>>");
+   yyparse_astree = new_astree (ROOT, 0, 0, 0, "<<ROOT>>");
    return yyparse_astree;
+}
+
+astree clone (astree src, int symbol) {
+   astree clone;
+   switch (symbol){
+   case ROOT:
+      clone = new_astree (symbol, src->filenr, 
+            src->linenr, src->offset, "<<ROOT>>");
+      break;
+   case PROTOTYPE:
+      clone = new_astree (symbol, src->filenr, 
+            src->linenr, src->offset, "<<PROTOTYPE>>");
+      break;
+   case FUNCTION:
+      clone = new_astree (symbol, src->filenr, 
+            src->linenr, src->offset, "<<FUNCTION>>");
+      break;
+   }
+   return clone;
 }
 
 
@@ -126,12 +169,38 @@ void scanner_include (void) {
 }
 
 void scanner_destroy(void){
+   //clean up a list of tokens
+   /* TO BE delete in lyutils
+   for(int i=0; i<=tlist.last; i++)
+      free(tlist.tokens[i]);
+   free(tlist.tokens);
+   */
    for (int i = 0; i <= filename_stack.last_filenr; i++)
       free(filename_stack.filenames[i]);
    free(filename_stack.filenames);
 }
 
 
-// LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.4 2014-05-29 20:37:38-07 - - $")
 
+void dumptok(FILE *out){
+   unsigned char printfile = -1;
+   for(int i=0; i<=token_list.last; i++){
+      if(printfile != token_list.tokens[i]->filenr){
+         printfile = token_list.tokens[i]->filenr;
+         fprintf(out, "#%3d \"%s\"\n",
+               printfile, getfilename(printfile));
+      }
+      fprintf(out, "%4d%4d.%03d%6d   %-15s (%s)\n",
+            token_list.tokens[i]->filenr,
+            token_list.tokens[i]->linenr,
+            token_list.tokens[i]->offset,
+            token_list.tokens[i]->symbol,
+            get_yytname(token_list.tokens[i]->symbol),
+            //need to convert symbol to literal here
+            token_list.tokens[i]->lexeme
+            );
+   }
+}
+
+// LINTED(static unused)
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.1 2014-06-06 18:49:21-07 - - $")

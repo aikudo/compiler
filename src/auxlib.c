@@ -136,5 +136,4 @@ void __debugprintf (char flag, char *file, int line, const char *func,
 }
 
 // LINTED(static unused)
-RCSC(AUXLIB_C,"$Id: auxlib.c,v 1.1 2014-05-28 19:42:39-07 - - $")
-
+RCSC(AUXLIB_C,"$Id: auxlib.c,v 1.1 2014-06-06 18:49:21-07 - - $")

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2014-05-29 20:37:38-07 - - $
+# $Id: Makefile,v 1.1 2014-06-06 18:49:21-07 - - $
 
 MKFILE    = Makefile
 DEPSFILE  = ${MKFILE}.deps
@@ -9,8 +9,8 @@ VALGRIND  = valgrind --leak-check=full --show-reachable=yes
 #
 # Definitions of list of files:
 #
-HSOURCES  = astree.h lyutils.h auxlib.h stringtable.h
-CSOURCES  = astree.c lyutils.c auxlib.c stringtable.c oc.c
+HSOURCES  = astree.h lyutils.h auxlib.h stringtable.h hashstack.h
+CSOURCES  = astree.c lyutils.c auxlib.c stringtable.c oc.c hashstack.c
 LSOURCES  = scanner.l
 YSOURCES  = parser.y
 ETCSRC    = README ${MKFILE} ${DEPSFILE}
@@ -67,13 +67,13 @@ ${CLGEN} : ${LSOURCES}
 # Build the parser.
 #
 ${CYGEN} ${HYGEN} : ${YSOURCES}
-	bison --defines=${HYGEN} --output=${CYGEN} ${YSOURCES}
+	bison -d --verbose --defines=${HYGEN} --output=${CYGEN} ${YSOURCES} --report-file=${YREPORT}
 
 #
 # Check sources into an RCS subdirectory.
 #
 ci : ${ALLSRC} ${TESTINS}
-	cid + ${ALLSRC} ${TESTINS} test?.inh
+	cid + ${ALLSRC} ${TESTINS} 
 	git add ${ALLSRC} -A
 
 #
@@ -89,12 +89,12 @@ lis : ${LISTSRC} tests
 # Clean and spotless remove generated files.
 #
 clean :
-	- rm -f ${OBJECTS} ${ALLGENS} ${REPORTS} ${DEPSFILE} core
+	- rm -f ${OBJECTS} ${ALLGENS} ${REPORTS} ${DEPSFILE} core y.tab.h
 	- rm -f ${foreach test, ${TESTINS:.in=}, \
 		${patsubst %, ${test}.%, out err}}
 
 spotless : clean
-	- rm ${EXECBIN} List.*.ps List.*.pdf
+	- rm -f ${EXECBIN} List.*.ps List.*.pdf lex.backup
 
 
 #

@@ -104,77 +104,44 @@ void scanopts(int argc, char **argv){
    gblinfo.fp = fp;
 }
 
-struct {
-   astree *tokens;
-   int size;
-   int last;
-} tlist = {NULL, 0 , -1};
-
-void addtokens(astree token){
-   assert(token != NULL);
-   if (tlist.tokens == NULL) {
-      tlist.size = 16;
-      tlist.tokens = malloc (tlist.size * sizeof (astree));
-      assert (tlist.tokens != NULL);
-   }else if (tlist.last == tlist.size - 1){
-      tlist.size *= 2;
-      tlist.tokens = realloc (tlist.tokens,
-                              tlist.size * sizeof(astree));
-      assert (tlist.tokens != NULL);
-   }
-   tlist.tokens[++tlist.last] = token;
-}
-
-void scanfile(void){
-   extern astree yylval;
-   hashtable *stringset = gblinfo.stringset;
-   while( yylex() != YYEOF ){
-      char *istr = inserthash(&stringset, yylval->lexinfo);
-      free(yylval->lexinfo);
-      yylval->lexinfo = istr;
-      addtokens(yylval);
-   }
-}
-
-void dumpstr(void){
-   FILE *out = fopen(gblinfo.names[STR], "w");
+void dumpfiles(void){
+   FILE *out;
+   int idx;
+   idx = STR;
+   out = fopen(gblinfo.names[idx], "w");
    if(!out){
-      fprintf(stderr, "%s: %s\n", gblinfo.names[STR],
+      fprintf(stderr, "%s: %s\n", gblinfo.names[idx],
             strerror(errno));
       exit(1);
    }
    assert (gblinfo.stringset != NULL);
    dumphash (gblinfo.stringset, out);
    fclose (out);
-}
 
-
-void dumptok(void){
-   FILE *out = fopen(gblinfo.names[TOK], "w");
+   idx = TOK;
+   out = fopen(gblinfo.names[idx], "w");
    if(!out){
-      fprintf(stderr, "%s: %s\n", gblinfo.names[TOK],
+      fprintf(stderr, "%s: %s\n", gblinfo.names[idx],
             strerror(errno));
       exit(1);
    }
-   unsigned char printfile = -1;
-   for(int i=0; i<=tlist.last; i++){
-      if(printfile != tlist.tokens[i]->filenr){
-         printfile = tlist.tokens[i]->filenr;
-         fprintf(out, "#%3d \"%s\"\n",
-               printfile, getfilename(printfile));
-      }
-      fprintf(out, "%4d%4d.%03d%6d   %-15s (%s)\n",
-            tlist.tokens[i]->filenr,
-            tlist.tokens[i]->linenr,
-            tlist.tokens[i]->offset,
-            tlist.tokens[i]->symbol,
-            get_yytname(tlist.tokens[i]->symbol),
-            //need to convert symbol to literal here
-            tlist.tokens[i]->lexinfo
-            );
-   }
+   assert (gblinfo.stringset != NULL);
+   dumptok ( out);
    fclose (out);
+
+   idx = AST;
+   out = fopen(gblinfo.names[idx], "w");
+   if(!out){
+      fprintf(stderr, "%s: %s\n", gblinfo.names[idx],
+            strerror(errno));
+      exit(1);
+   }
+   assert (gblinfo.stringset != NULL);
+   dump_astree (out, yyparse_astree, 0);
+   fclose (out);
+
 }
+
 
 extern int yylex_destroy (void);
 
@@ -183,10 +150,6 @@ void destroy_all(void){
    yylex_destroy();
    scanner_destroy();
    delhash(& (gblinfo.stringset) );
-   //clean up a list of tokens
-   for(int i=0; i<=tlist.last; i++)
-      free(tlist.tokens[i]);
-   free(tlist.tokens);
 
    for(int i=0; i < OUTFILES; i++){
       free( gblinfo.names[i]);
@@ -197,14 +160,15 @@ void destroy_all(void){
    pclose(gblinfo.fp);
 }
 
+hashtable *stringset;
 int main (int argc, char** argv) {
    scanopts(argc, argv);
-   gblinfo.stringset = newhash();
-   scanfile();
-   dumpstr();
-   dumptok();
+   stringset = newhash();
+   gblinfo.stringset = stringset;
+   yyparse();
+   dumpfiles();
 
-   destroy_all();
    return 0;
 }
 
+RCSC(OC_C,"$Id: oc.c,v 1.1 2014-06-06 18:49:21-07 - - $")
