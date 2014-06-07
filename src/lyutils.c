@@ -114,12 +114,15 @@ void scanner_badtoken (char *lexeme) {
 }
 
 //all scanned tokens are sent to this function. marker HERE
+extern hashstack *identstack;
+
 int yylval_token (int symbol) {
    int offset = scan_offset - yyleng;
    char *lexeme = inserthash(&stringset, yytext);
    yylval = new_astree (symbol, filename_stack.last_filenr,
                         scan_linenr, offset, lexeme);
    addtokens(yylval);
+   add_hashstack( identstack, lexeme);
    return symbol;
 }
 
@@ -203,4 +206,4 @@ void dumptok(FILE *out){
 }
 
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.1 2014-06-06 18:49:21-07 - - $")
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.2 2014-06-06 22:01:08-07 - - $")

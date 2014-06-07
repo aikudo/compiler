@@ -161,14 +161,20 @@ void destroy_all(void){
 }
 
 hashtable *stringset;
+
+hashstack *identstack;
+
+
 int main (int argc, char** argv) {
    scanopts(argc, argv);
    stringset = newhash();
+   identstack = newhashstack();
    gblinfo.stringset = stringset;
    yyparse();
    dumpfiles();
+   print_hashstack ( identstack, stdout, 1);
 
    return 0;
 }
 
-RCSC(OC_C,"$Id: oc.c,v 1.1 2014-06-06 18:49:21-07 - - $")
+RCSC(OC_C,"$Id: oc.c,v 1.2 2014-06-06 22:01:08-07 - - $")

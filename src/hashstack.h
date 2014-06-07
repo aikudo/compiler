@@ -12,12 +12,12 @@ typedef struct hashstack{
    size_t size;            //number of slots
    size_t load;            //number of elements
    hsnode **chains;
-   hsnode *stack;          //identifier stackA
+   hsnode *stack;          //itemifier stackA
    hsnode *gblhead;        //ptr to global stack block
 }hashstack;
 
 struct hsnode{
-   const char* lexinfo;                // get from stringtable
+   const char* lexeme;                // get from stringtable
    union{
       uint16_t attribs;
       uint16_t isvoid:1;
@@ -51,12 +51,14 @@ struct hsnode{
    struct hsnode *stacknext;     // a link for stack
 };
 
+void print_hashstack (hashstack *this, FILE *out, char detail);
+hashstack *newhashstack (void);
 
-hsnode* add_hashstack (hashstack *this, const char *ident);
-hsnode* find_hashstack (hashstack *this, const char *ident);
-hsnode* rm_hashstack (hashstack *this, const char *ident);
+hsnode* add_hashstack (hashstack *this, const char *item);
+hsnode* find_hashstack (hashstack *this, const char *item);
+hsnode* rm_hashstack (hashstack *this, const char *item);
 
 hsnode* push_hashstack (hashstack *this, const hsnode *item);
 hsnode* pop_hashstack (hashstack *this);
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.1 2014-06-06 18:49:21-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.2 2014-06-06 22:01:08-07 - - $")
 #endif
