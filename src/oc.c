@@ -169,7 +169,7 @@ hashstack *identstack;
 int main (int argc, char** argv) {
    scanopts(argc, argv);
    stringset = newhash();
-   identstack = newhashstack();
+   identstack = new_hashstack();
    gblinfo.stringset = stringset;
    yyparse();
    dumpfiles();
@@ -179,4 +179,4 @@ int main (int argc, char** argv) {
    return 0;
 }
 
-RCSC(OC_C,"$Id: oc.c,v 1.3 2014-06-06 22:43:02-07 - - $")
+RCSC(OC_C,"$Id: oc.c,v 1.4 2014-06-07 20:15:50-07 - - $")

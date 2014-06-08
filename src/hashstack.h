@@ -18,25 +18,7 @@ typedef struct hashstack{
 
 struct hsnode{
    const char* lexeme;                // get from stringtable
-   union{
-      uint16_t attribs;
-      uint16_t isvoid:1;
-      uint16_t isbool:1;
-      uint16_t ischar:1;
-      uint16_t isint:1;
-      uint16_t isnull:1;
-      uint16_t isstring:1;
-      uint16_t isstruct:1;
-      uint16_t isfunction:1;
-      uint16_t isvariable:1;
-      uint16_t isfield:1;
-      uint16_t istypeid:1;
-      uint16_t isparam:1;
-      uint16_t islvalue:1;
-      uint16_t isconst:1;
-      uint16_t isvreg:1;
-      uint16_t isvaddr:1;
-   }at;
+   unsigned long attributes;
 
    hashstack *structtablenode;   //TODO: if typeid is is present
    hashstack *fieldtable;        
@@ -52,7 +34,7 @@ struct hsnode{
 };
 
 void print_hashstack (hashstack *this, FILE *out, char detail);
-hashstack *newhashstack (void);
+hashstack *new_hashstack (void);
 
 hsnode add_hashstack (hashstack *this, const char *item);
 hsnode find_hashstack (hashstack *this, const char *item);
@@ -60,5 +42,5 @@ hsnode rm_hashstack (hashstack *this, const char *item);
 
 hsnode push_hashstack (hashstack *this, const hsnode *item);
 hsnode pop_hashstack (hashstack *this);
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.3 2014-06-07 15:58:10-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.4 2014-06-07 20:15:50-07 - - $")
 #endif

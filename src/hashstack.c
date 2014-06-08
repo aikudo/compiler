@@ -5,7 +5,7 @@
 #define HASH_NEW_SIZE 15
 #define HSZ  1000
 
-hashstack *newhashstack (void) {
+hashstack *new_hashstack (void) {
    hashstack *this = calloc(1, sizeof (struct hashstack));
    assert (this != NULL);
    this->chains = calloc(HASH_NEW_SIZE, sizeof (hsnode *));
@@ -91,4 +91,4 @@ void print_hashstack (hashstack *this, FILE *out, char detail) {
 }
 
 
-RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.4 2014-06-07 15:58:10-07 - - $")
+RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.5 2014-06-07 20:15:50-07 - - $")
