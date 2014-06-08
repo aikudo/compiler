@@ -114,16 +114,21 @@ hashstack *idents;
 hashstack *types;
 
 int gblblock = 0;
-
+//
+//grammar:= fielddecl | identdecl -> basetype []? FIELD
+//basetype is root. If exist '[]', it's the first child.
+//FIELD/DECLID is the next child.
+//
 //set a flag on an identifier token and return that token
-astree basetype(astree type, hsnode attrib){
-   astree ident;
-   bitset_t attributes = 0L;
-   if(type->symbol == ARRAY){
-      type = type->first;
+astree basetype(astree root, hsnode attrib){
+   astree ident, type;
+   bitset_t attributes = 0;
+   if(root->symbol == ARRAY){
+      type = root->first;
       ident = type->next;
       attributes |= ATTR_ARRAY;
    } else{
+      type = root;
       ident = type->first;
       switch(type->symbol){
          case VOID: //this should flag a error we do type checking
@@ -158,27 +163,39 @@ astree basetype(astree type, hsnode attrib){
    return ident;
 }
 
-void structblock(astree child){
-   //TODO make sure that struct wasn't declared yet
-   astree structnode = child->first;
-   bitset_t attributes = 0;
-   if(find_hashstack(types, structnode->lexeme)){
-      printf("struct %s already declared\n", structnode->lexeme);
-   }else{
-      hsnode node = add_hashstack(types, structnode->lexeme);
-      attributes |= ATTR_STRUCT;
-      attributes |= ATTR_TYPEID;
-      //node->blocknr = 0;
-      //setup line coordinate here
-      //create as hashtable
-      hashstack *fields = new_hashstack();
-      for(astree field = structnode->next; field; field = field->next){
-         astree fieldid = field->first; //field: type; fieldid: name
-         hsnode  fieldnode = add_hashstack(fields, fieldid->lexeme);
-         fieldnode->attributes |= ATTR_FIELD;
-         basetype(field, fieldnode);
+void structblock(astree root){
+   printf("structblock%d.%d.%d\n",
+         root->filenr, 
+         root->linenr,
+         root->offset);
 
+   astree typeid = root->first;
+   if(find_hashstack(types, typeid->lexeme)){
+      //include the location of the declaraction?
+      //if yes, need to attach coordinate tag to TYPEID prior using
+      eprintf("struct %s is already declared\n", typeid->lexeme);
+      return;
+   }else{
+      hsnode attrib = add_hashstack(types, typeid->lexeme);
+      attrib->attributes = ATTR_STRUCT;
+      attrib->attributes |= ATTR_TYPEID;
+
+      hashstack *fields = new_hashstack();
+      for(astree member = typeid->next; member; member = member->next){
+         astree field;
+         field = (member->symbol != ARRAY) ? member->first : member->first->next;
+         if(find_hashstack(fields, field->lexeme)){
+            eprintf("field %s is already declared\n", field->lexeme);
+            continue;
+         }else{
+            hsnode fieldattrib = add_hashstack(fields, field->lexeme);
+            basetype(member, fieldattrib);
+            fieldattrib->attributes |= ATTR_FIELD;
+            field->attrib = fieldattrib;
+         }
       }
+      attrib->fields = fields;
+      typeid->attrib = attrib;
    }
 }
 
@@ -188,16 +205,16 @@ void preproc(astree child){
          structblock(child);
          break;
       case PROTOTYPE:
-         printf("PRE on PROTOTYPE:[%s] \n", child->lexeme);
+         DEBUGF('P',"PRE on PROTOTYPE:[%s] \n", child->lexeme);
          break;
       case PARAM:
-         printf("PRE on PARAM:[%s] \n", child->lexeme);
+         DEBUGF('P',"PRE on PARAM:[%s] \n", child->lexeme);
          break;
       case BLOCK:
-         printf("PRE on BLOCK:[%s] \n", child->lexeme);
+         DEBUGF('P',"PRE on BLOCK:[%s] \n", child->lexeme);
          break;
       case FUNCTION:
-         printf("PRE on FUNCTION:[%s] \n", child->lexeme);
+         DEBUGF('P',"PRE on FUNCTION:[%s] \n", child->lexeme);
          break;
    }
 }
@@ -205,16 +222,16 @@ void preproc(astree child){
 void postproc(astree child){
    switch(child->symbol){
       case PROTOTYPE:
-         printf("POST on PROTOTYPE:[%s] \n", child->lexeme);
+         DEBUGF('P',"POST on PROTOTYPE:[%s] \n", child->lexeme);
          break;
       case PARAM:
-         printf("POST on PARAM:[%s] \n", child->lexeme);
+         DEBUGF('P',"POST on PARAM:[%s] \n", child->lexeme);
          break;
       case BLOCK:
-         printf("POST on BLOCK:[%s] \n", child->lexeme);
+         DEBUGF('P',"POST on BLOCK:[%s] \n", child->lexeme);
          break;
       case FUNCTION:
-         printf("POST on FUNCTION:[%s] \n", child->lexeme);
+         DEBUGF('P',"POST on FUNCTION:[%s] \n", child->lexeme);
          break;
    }
 }
@@ -225,18 +242,32 @@ void traverse(astree node){
    for (astree child = node->first; child != NULL; child = child->next){
       preproc(child);
       traverse(child);
-      postproc(child);
+      //postproc(child);
+   }
+}
+
+void printsym(astree node){
+   if(node == NULL) return;
+   if(node->attrib){
+      printf("%s: ", node->lexeme);
+      print_attributes (node->attrib->attributes);
+      printf("\n");
+   }
+
+   for (astree child = node->first; child != NULL; child = child->next){
+      printsym(child);
+      //postproc(child);
    }
 }
 
 void buildsym(void){
-   /*ident = new_hashstack();
+   idents = new_hashstack();
    types = new_hashstack();
-   */
 
    printf("root %p\n", yyparse_astree);
-   //traverse(yyparse_astree);
+   traverse(yyparse_astree);
+   printsym(yyparse_astree);
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.1 2014-06-08 00:52:12-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.2 2014-06-08 03:18:56-07 - - $")

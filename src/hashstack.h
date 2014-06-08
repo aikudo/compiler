@@ -21,7 +21,7 @@ struct hsnode{
    unsigned long attributes;
 
    hashstack *structtablenode;   //TODO: if typeid is is present
-   hashstack *fieldtable;        
+   hashstack *fields;        
 
    int filenr;                   // index into filename stack
    int linenr;                   // line number from source code
@@ -42,5 +42,5 @@ hsnode rm_hashstack (hashstack *this, const char *item);
 
 hsnode push_hashstack (hashstack *this, const hsnode *item);
 hsnode pop_hashstack (hashstack *this);
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.1 2014-06-08 00:52:12-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.2 2014-06-08 03:18:56-07 - - $")
 #endif

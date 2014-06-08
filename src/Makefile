@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2014-06-08 00:52:12-07 - - $
+# $Id: Makefile,v 1.4 2014-06-08 03:22:30-07 - - $
 
 MKFILE    = Makefile
 DEPSFILE  = ${MKFILE}.deps
@@ -27,7 +27,7 @@ YREPORT   = yyparse.output
 IREPORT   = ident.output
 REPORTS   = ${LREPORT} ${YREPORT} ${IREPORT}
 ALLSRC    = ${ETCSRC} ${YSOURCES} ${LSOURCES} ${HSOURCES} ${CSOURCES}
-TESTINS   = ${wildcard test?.in}
+TESTINS   = ${wildcard test?.oc}
 LISTSRC   = ${ALLSRC} ${HYGEN}
 
 #
@@ -74,7 +74,7 @@ ${CYGEN} ${HYGEN} : ${YSOURCES}
 #
 ci : ${ALLSRC} ${TESTINS}
 	cid + ${ALLSRC} ${TESTINS} 
-	git add ${ALLSRC} -A
+	git add ${ALLSRC} ${TESTINS} ocfiles -A
 
 #
 # Make a listing from all of the sources

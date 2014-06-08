@@ -174,9 +174,9 @@ int main (int argc, char** argv) {
    yyparse();
    dumpfiles();
    buildsym();
-   print_hashstack ( identstack, stdout, 1);
+//   print_hashstack ( identstack, stdout, 1);
 
    return 0;
 }
 
-RCSC(OC_C,"$Id: oc.c,v 1.1 2014-06-08 00:52:12-07 - - $")
+RCSC(OC_C,"$Id: oc.c,v 1.2 2014-06-08 03:18:56-07 - - $")
