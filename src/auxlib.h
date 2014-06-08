@@ -120,5 +120,5 @@ static const char __RCS_C_##NAME[] = "\0" ID \
 "\0$Compiled: " __FILE__ " " __DATE__ " " __TIME__ " $";
 
 // LINTED(static unused)
-RCSH(AUXLIB_H,"$Id: auxlib.h,v 1.1 2014-06-06 18:49:21-07 - - $")
+RCSH(AUXLIB_H,"$Id: auxlib.h,v 1.1 2014-06-08 00:52:12-07 - - $")
 #endif

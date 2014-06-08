@@ -239,4 +239,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.3 2014-06-07 20:15:50-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.1 2014-06-08 00:52:12-07 - - $")

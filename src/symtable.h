@@ -6,5 +6,5 @@
 
 void buildsym(void);
 
-RCSH(SYMTABLE_H,"$Id: symtable.h,v 1.1 2014-06-06 22:43:02-07 - - $")
+RCSH(SYMTABLE_H,"$Id: symtable.h,v 1.1 2014-06-08 00:52:12-07 - - $")
 #endif

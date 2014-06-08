@@ -206,4 +206,4 @@ void dumptok(FILE *out){
 }
 
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.2 2014-06-06 22:01:08-07 - - $")
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.1 2014-06-08 00:52:12-07 - - $")

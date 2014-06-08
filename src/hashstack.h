@@ -42,5 +42,5 @@ hsnode rm_hashstack (hashstack *this, const char *item);
 
 hsnode push_hashstack (hashstack *this, const hsnode *item);
 hsnode pop_hashstack (hashstack *this);
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.4 2014-06-07 20:15:50-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.1 2014-06-08 00:52:12-07 - - $")
 #endif

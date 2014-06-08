@@ -183,4 +183,4 @@ int main (int argc, char **argv) {
 }
 */
 
-RCSC(STRINGTABLE_C,"$Id: stringtable.c,v 1.1 2014-06-06 18:49:21-07 - - $")
+RCSC(STRINGTABLE_C,"$Id: stringtable.c,v 1.1 2014-06-08 00:52:12-07 - - $")

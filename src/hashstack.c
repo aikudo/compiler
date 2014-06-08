@@ -91,4 +91,4 @@ void print_hashstack (hashstack *this, FILE *out, char detail) {
 }
 
 
-RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.5 2014-06-07 20:15:50-07 - - $")
+RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.1 2014-06-08 00:52:12-07 - - $")
