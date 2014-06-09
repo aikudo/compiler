@@ -1,8 +1,10 @@
 //struct node j; this is not valid
 //char j; is not valid because it has to be assigned
 struct emptystruct {}
-int jon = 4;
-node jonnode = 4;
+struct emptystruct {int a;}
+struct emptystruct {}
+//int jon = 4;
+//node jonnode = 4;
 struct node { int foo; node link; int [] intarr;}
 struct foo { int foo; node link; int [] intarr;}
 node func (node head, int length) {
