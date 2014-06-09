@@ -2,45 +2,61 @@
 #define __HASH_STACK_H__
 
 #include <stdlib.h>
-#include <stdint.h> //for int types
+#include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
 #include "auxlib.h"
 
 typedef struct hsnode *hsnode;
-typedef struct hashstack{
-   size_t size;            //number of slots
-   size_t load;            //number of elements
-   hsnode *chains;
-   hsnode stack;          //itemifier stackA
-   hsnode gblhead;        //ptr to global stack block
-}hashstack;
+typedef struct hashstack *hashstack;
+
+struct hashstack{
+   size_t size;                  //number of slots
+   size_t load;                  //number of elements
+   hsnode *chains;               //array of chain
+   hsnode stack;                 //itemifier stackA
+   hsnode gblhead;               //ptr to global block head stack
+   int block;                    //global current scope
+};
 
 struct hsnode{
-   const char* lexeme;                // get from stringtable
-   unsigned long attributes;
-
-   hashstack *structtablenode;   //TODO: if typeid is is present
-   hashstack *fields;        
+   const char* lexeme;           // its adddress is hashed to table
 
    int filenr;                   // index into filename stack
    int linenr;                   // line number from source code
    int offset;                   // offset of token with current line
    int blocknr;                  // indicate block/scope level
 
-   struct hsnode *paramlist;     // a list of parameters
-   struct hsnode *link;          // hash link for channing
-   struct hsnode *stacknext;     // a link for stack
+   unsigned long attributes;     // do i need this? dupped in AST
+   hashstack fields;             // if this is struct, it has fields
+   hsnode structid;              // points to the type it used
+   hsnode params;                // a list of parameters
+   hsnode next;                  // a link for stack
+   hsnode link;                  // hash link for hash-channing
 };
 
-void print_hashstack (hashstack *this, FILE *out, char detail);
-hashstack *new_hashstack (void);
+hashstack new_hashstack (void);
+void delete_hashstack (hashstack *this); //ptr will be nulled
 
-hsnode add_hashstack (hashstack *this, const char *item);
-hsnode find_hashstack (hashstack *this, const char *item);
-hsnode rm_hashstack (hashstack *this, const char *item);
+//Make sure the key is unique for push() & add(),
+//otherwise it will return existen item.
+//
+//Each of the operations returns the object operated on.
+//Caller can modify the content directly with the above
+//non-encapsulated fields
+//
+//hash operations
+hsnode add_hashstack (hashstack this, const char *key);
+hsnode find_hashstack (hashstack this, const char *key);
+hsnode rm_hashstack (hashstack this, const char *key);
+void print_hashstack (hashstack this, FILE *out, char detail);
 
-hsnode push_hashstack (hashstack *this, const hsnode *item);
-hsnode pop_hashstack (hashstack *this);
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.2 2014-06-08 03:18:56-07 - - $")
+//stack operations
+hsnode push_hashstack (hashstack this, const char *key);
+hsnode pop_hashstack (hashstack this);
+hsnode peak_hashstack (hashstack this);
+void list_hashstack (hashstack this, FILE *out);
+
+
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.3 2014-06-09 00:32:21-07 - - $")
 #endif

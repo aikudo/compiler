@@ -114,7 +114,7 @@ void scanner_badtoken (char *lexeme) {
 }
 
 //all scanned tokens are sent to this function. marker HERE
-extern hashstack *identstack;
+extern hashstack identstack;
 
 int yylval_token (int symbol) {
    int offset = scan_offset - yyleng;
@@ -206,4 +206,4 @@ void dumptok(FILE *out){
 }
 
 // LINTED(static unused)
-RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.1 2014-06-08 00:52:12-07 - - $")
+RCSC(LYUTILS_C,"$Id: lyutils.c,v 1.2 2014-06-09 00:32:21-07 - - $")

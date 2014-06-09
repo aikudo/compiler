@@ -163,7 +163,7 @@ void destroy_all(void){
 
 hashtable *stringset;
 
-hashstack *identstack;
+hashstack identstack;
 
 
 int main (int argc, char** argv) {
@@ -174,9 +174,22 @@ int main (int argc, char** argv) {
    yyparse();
    dumpfiles();
    buildsym();
-//   print_hashstack ( identstack, stdout, 1);
+   //print_hashstack ( identstack, stdout, 1);
+   push_hashstack(identstack, "hello");
+   push_hashstack(identstack, "word");
+   print_hashstack ( identstack, stdout, 1);
+   hsnode item = pop_hashstack(identstack);
+   printf("poped %s\n", item->lexeme);
+
+   print_hashstack ( identstack, stdout, 1);
+   item = pop_hashstack(identstack);
+   printf("poped %s\n", item->lexeme);
+
+   print_hashstack ( identstack, stdout, 1);
+   item = pop_hashstack(identstack);
+   if(item) printf("poped %s\n", item->lexeme);
 
    return 0;
 }
 
-RCSC(OC_C,"$Id: oc.c,v 1.2 2014-06-08 03:18:56-07 - - $")
+RCSC(OC_C,"$Id: oc.c,v 1.5 2014-06-09 00:38:35-07 - - $")

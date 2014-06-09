@@ -19,7 +19,7 @@ bool is_astree (void *object) {
 astree new_astree (int symbol, int filenr, int linenr, int offset,
                    char *lexeme) {
    size_t size = sizeof (struct astree_rep);
-   astree tree = malloc (size);
+   astree tree = calloc (1, size);
    assert (tree != NULL);
    tree->tag = astree_tag;
    tree->symbol = symbol;
@@ -27,10 +27,6 @@ astree new_astree (int symbol, int filenr, int linenr, int offset,
    tree->linenr = linenr;
    tree->offset = offset;
    tree->lexeme = lexeme;
-   tree->attrib = NULL;
-   tree->first = NULL;
-   tree->last = NULL;
-   tree->next = NULL;
    DEBUGF ('f', "malloc (%d) = %p-> %d:%d.%d: %s: %p->\"%s\"\n",
            size, tree, tree->filenr, tree->linenr, tree->offset,
            get_yytname (tree->symbol), tree->lexeme, tree->lexeme);
@@ -151,4 +147,4 @@ void freeast (astree root) {
 }
 
 // LINTED(static unused)
-RCSC(ASTREE_C,"$Id: astree.c,v 1.1 2014-06-08 00:52:12-07 - - $")
+RCSC(ASTREE_C,"$Id: astree.c,v 1.2 2014-06-09 00:32:21-07 - - $")

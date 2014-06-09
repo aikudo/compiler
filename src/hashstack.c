@@ -1,12 +1,11 @@
-
 #include "hashstack.h"
 
 
 #define HASH_NEW_SIZE 15
 #define HSZ  1000
 
-hashstack *new_hashstack (void) {
-   hashstack *this = calloc(1, sizeof (struct hashstack));
+hashstack new_hashstack (void) {
+   hashstack this = calloc(1, sizeof (struct hashstack));
    assert (this != NULL);
    this->chains = calloc(HASH_NEW_SIZE, sizeof (hsnode *));
    assert (this->chains != NULL);
@@ -17,7 +16,7 @@ hashstack *new_hashstack (void) {
    return this;
 }
 
-hsnode find_hashstack (hashstack *this, const char *item){
+hsnode find_hashstack (hashstack this, const char *item){
    assert (this != NULL && item != NULL);
    uintptr_t hashcode = (uintptr_t) item % this->size;
    hsnode list = this->chains[hashcode];
@@ -29,9 +28,9 @@ hsnode find_hashstack (hashstack *this, const char *item){
 }
 
 
-hsnode add_hashstack (hashstack *this, const char *item) {
-   DEBUGF ('H', "adding %p %s\n", this, item);
+hsnode add_hashstack (hashstack this, const char *item) {
    assert (this != NULL && item != NULL);
+   DEBUGF ('H', "adding %p %s\n", this, item);
    hsnode found; //no dup hash
    if ( (found = find_hashstack(this, item) ) != NULL ) return found;
    size_t sz = this->size;
@@ -41,6 +40,7 @@ hsnode add_hashstack (hashstack *this, const char *item) {
    if(this->load * 2 > sz){
       hsnode *oldchain = this->chains;
       hsnode *newchain = calloc(newsz, sizeof(hsnode));
+      assert (newchain != NULL);
       for(i = 0 ; i < sz; ++i){
          hsnode list = oldchain[i];
          hsnode curr;
@@ -58,6 +58,7 @@ hsnode add_hashstack (hashstack *this, const char *item) {
    }
    hashcode  = (uintptr_t) item % this->size;
    hsnode node = calloc(1, sizeof(struct hsnode));
+   assert (node != NULL);
    node->lexeme = item;
    node->link = this->chains[hashcode];
    this->chains[hashcode] = node;
@@ -65,7 +66,8 @@ hsnode add_hashstack (hashstack *this, const char *item) {
    return node;
 }
 
-void print_hashstack (hashstack *this, FILE *out, char detail) {
+void print_hashstack (hashstack this, FILE *out, char detail) {
+   assert (this != NULL && out != NULL);
    size_t i;
    unsigned histo[HSZ];
    for(i = 0; i<HSZ; i++) histo[i] = 0;
@@ -90,5 +92,45 @@ void print_hashstack (hashstack *this, FILE *out, char detail) {
    }
 }
 
+hsnode push_hashstack (hashstack this, const char *item){
+   //assert (this != NULL && item != NULL);
+   hsnode node = add_hashstack(this, item);
+   node->next = this->stack;
+   this->stack = node;
+   return node;
+}
 
-RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.1 2014-06-08 00:52:12-07 - - $")
+hsnode pop_hashstack (hashstack this){
+   assert(this != NULL);
+   hsnode node = this->stack;
+   if(node != NULL){ //remove it from a hash table 
+      uintptr_t hashcode = (uintptr_t) node->lexeme % this->size;
+      hsnode itor = this->chains[hashcode];
+      hsnode prev;
+      while(itor){
+         if(itor->lexeme == node->lexeme) break;
+         else{
+            prev = itor;
+            itor = itor->link;
+         }
+      }
+      assert(itor != NULL); //item must be found in both stack & hash
+      if(itor == this->chains[hashcode]){          // on first node
+         this->chains[hashcode] = itor->link;
+      }else if(itor->link == NULL){                // on last node
+         prev->link = NULL;
+      }else{
+         prev->link = itor->link;
+      }
+      this->load--;
+      this->stack = this->stack->next;
+   }
+   return node;
+}
+
+hsnode peak_hashstack (hashstack this){ //basically useless function
+   assert(this != NULL);
+   return (this->stack);
+}
+
+RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.2 2014-06-09 00:32:21-07 - - $")

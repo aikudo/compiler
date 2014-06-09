@@ -1,0 +1,4 @@
+//this is not support because variable declare
+//has to have assignment as with this grammar
+//vardecl : identdecl '=' expr ';'
+//char j;
