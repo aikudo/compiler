@@ -57,5 +57,5 @@ hsnode peak_hashstack (hashstack this);
 //void list_hashstack (hashstack this, FILE *out);
 
 
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.3 2014-06-09 00:32:21-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.4 2014-06-09 03:42:55-07 - - $")
 #endif
