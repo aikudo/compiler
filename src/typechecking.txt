@@ -1,0 +1,30 @@
+==Variables and Functions
+They can't have same name because they share the same name space.
+Functions have global scope.
+
+Variables have both global and local scope.
+   Local hides global scope.
+   Error if local collides with outter scope.
+   Disjoint scopes may have same name
+   May be reference within the scope.
+
+
+
+==STRUCT
+Make sure this particular struct isn't already declared.
+Add this new struct named 'structid' to a types-hashtable.
+Mark this 'structid' with prevelant flags.
+
+
+Create a field-hashtable to store fields.
+Foreach fields in 'structid', 
+mark each fields with their prevelant flags.
+Check its type. If typeid 
+(user defined type via struct), lookup
+types-hashtable make sure that type is 
+already declared.
+
+Make sure fields aren't duplicated.
+Store all the fields to a field-hashtable
+Link this field-hashtable to its 'structid'.
+

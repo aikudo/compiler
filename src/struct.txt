@@ -1,0 +1,10 @@
+ROOT "<<ROOT>>" 0.0.0
+   STRUCT "struct" 2.1.0
+      TYPEID "node" 2.1.7
+      INT "int" 2.1.14
+         FIELD "foo" 2.1.18
+      TYPEID "node" 2.1.23
+         FIELD "link" 2.1.28
+      ARRAY "[]" 2.1.38
+         INT "int" 2.1.34
+         FIELD "intarr" 2.1.41

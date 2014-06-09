@@ -1,0 +1,34 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2014.06.08.10.19.15;	author linh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@struct node { int foo; node link; int [] intarr;}
+node func (node head, int length) {
+   int a = 0; string b = ""; node c = new node();
+   if (a < 3) { int d = 8; a= length; c = c.link;}
+   else { string e = "";
+      if (0 == 0) { int f =8; }
+      else { int g = 9; }
+   }
+}
+node h = func (null, 10);
+
+@

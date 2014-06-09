@@ -4,7 +4,6 @@
 #include "auxlib.h"
 #include "symtable.h"
 
-//http://www.rightcorner.com/code/CPP/Concepts/DeviceManager/sample.php
 typedef unsigned long bitset_t;
 hashstack idents, types;
 
@@ -111,110 +110,129 @@ int main (void) {
 
 
 ////START HERE
+
+bool checktype(astree type, astree ident){
+   if(find_hashstack(types, type->lexeme)){
+      return true;
+   }else{
+      eprintf("Type %s(%d.%d.%d) used by %s is not declared.\n",
+            type->lexeme,
+            type->filenr,
+            type->linenr,
+            type->offset,
+            ident->lexeme);
+      return false;
+   }
+}
+
+
 //
-//bool checktype(astree type, astree ident){
-//   if(find_hashstack(types, type->lexeme)){
-//      return true;
-//   }else{
-//      eprintf("Type %s used by %s is not declared.\n",
-//            type->lexeme, ident->lexeme); //include coord?
-//      return false;
-//   }
-//}
+//grammar:= fielddecl | identdecl -> basetype []? FIELD
+//basetype is root. If exist '[]', it's the first child.
+//FIELD/DECLID is the next child.
 //
+//set flags on an identifier AST node and return that token
+astree basetype(astree root){
+   astree ident, type;
+   bitset_t attributes = 0;
+   if(root->symbol == ARRAY){
+      type = root->first;
+      ident = type->next;
+      attributes = ATTR_ARRAY;
+   } else{
+      type = root;
+      ident = type->first;
+   }
+
+   switch(type->symbol){
+      case VOID:     attributes |= ATTR_VOID; break;
+      case BOOL:     attributes |= ATTR_BOOL; break;
+      case CHAR:     attributes |= ATTR_CHAR; break;
+      case INT:      attributes |= ATTR_INT; break;
+      case STRING:   attributes |= ATTR_STRING; break;
+      case TYPEID:   checktype(type, ident);
+                     ident->structid = type;
+                     attributes |= ATTR_STRUCT; break;
+      default:
+                     STUBPRINTF("ERROR: Uncaught symbol%s\n",
+                        get_yytname(type->symbol));
+                     exit(1);
+   }
+
+   ident->attributes = attributes;
+   return ident;
+}
+
+// Struct has its own namespace.
+// It can't collide except when it defines e.g.
 //
-//int gblblock = 0;
-////
-////grammar:= fielddecl | identdecl -> basetype []? FIELD
-////basetype is root. If exist '[]', it's the first child.
-////FIELD/DECLID is the next child.
-////
-////set a flag on an identifier token and return that token
-//astree basetype(astree root){
-//   astree ident, type;
-//   bitset_t attributes = 0;
-//   if(root->symbol == ARRAY){
-//      type = root->first;
-//      ident = type->next;
-//      attributes = ATTR_ARRAY;
-//   } else{
-//      type = root;
-//      ident = type->first;
-//   }
+// struct foo {}                 //declare
+// struct foo { int a; foo a; }  //define
+// struct foo {}  //fail
 //
-//   switch(type->symbol){
-//      case VOID: //this should flag a error we do type checking
-//         attributes |= ATTR_VOID;
-//         break;
-//      case BOOL:
-//         attributes |= ATTR_BOOL;
-//         break;
-//      case CHAR:
-//         attributes |= ATTR_CHAR;
-//         break;
-//      case INT:
-//         attributes |= ATTR_INT;
-//         break;
-//      case STRING:
-//         attributes |= ATTR_STRING;
-//         break;
-//      case TYPEID:
-//         checktype(type, ident);
-//         //attributes |= ATTR_TYPEID;
-//         attributes |= ATTR_STRUCT;
-//         ident->structid = type;
-//         break;
-//      default:
-//         STUBPRINTF("ERROR: Uncaught symbol%s\n",
-//               get_yytname(type->symbol));
-//         exit(1);
-//   }
+// Member fields are in their own name space for each struct.
 //
-//   //marking lvalue or field is done by caller
-//   ident->attributes = attributes;
-//   return ident;
-//}
-//
-////types and fields have only one level,
-////so no need to use the stack feature in hashstack.
-////
-////
-////implemented 3.2 b, c
-//void structblock(astree root){
-//   printf("structblock%d.%d.%d\n",
-//         root->filenr, 
-//         root->linenr,
-//         root->offset);
-//
-//   astree typeid = root->first;
-//   if(find_hashstack(types, typeid->lexeme)){
-//      //include the location of the declaraction?
-//      //if yes, need to attach coordinate tag to TYPEID prior using
-//      eprintf("struct %s is already declared\n", typeid->lexeme);
-//      return;
-//   }else{
-//      //mark attributes directly onto AST node
-//      hsnode typesym = add_hashstack(types, typeid->lexeme);
-//      typeid->attributes = ATTR_STRUCT | ATTR_TYPEID;
-//      //typeid->blocknr = 0; // all struct types are global: zeroj
-//
-//      hashstack *fields = new_hashstack();
-//      for(astree member = typeid->next; member; member = member->next){
-//         astree field = basetype(member);
-//         field->attributes |= ATTR_FIELD;
-//         field->blocknr = 1; //a hack for print; all fields are zero
-//         if(find_hashstack(fields, field->lexeme)){
-//            eprintf("field %s is already declared\n", field->lexeme);
-//         }else{
-//            add_hashstack(fields, field->lexeme);
-//            //if need to mark attribute after a node is added to
-//            //a hashstack, just search for add_hashstack
-//         }
-//      }
-//      typesym->fields = fields;
-//   }
-//}
-//
+
+//An add wrapper for add_hashstack()
+//attributes from AST is copied to SYM node
+//AST node hooks to SYM node for easy printout and cleanup
+
+hsnode add(hashstack this, astree item){
+   hsnode node = add_hashstack(this, item->lexeme);
+   node->filenr = item->filenr;
+   node->linenr = item->linenr;
+   node->offset = item->offset;
+   node->attributes = item->attributes;
+   item->sym = node;
+   return node;
+}
+
+void structblock(astree root){
+   astree typeid = root->first;
+   hsnode found = find_hashstack(types, typeid->lexeme);
+
+   if(found && found->fields){
+      eprintf("struct %s(%d.%d.%d.) is already defined\n",
+            found->lexeme,
+            found->filenr,
+            found->linenr,
+            found->offset);
+      return;
+   }else if(!found){
+      typeid->attributes = ATTR_STRUCT | ATTR_TYPEID;
+      found = add_hashstack(types, typeid->lexeme);
+      found->filenr = typeid->filenr;
+      found->linenr = typeid->linenr;
+      found->offset = typeid->offset;
+      found->attributes = typeid->attributes;
+      typeid->sym = found;
+   }
+
+   astree member = typeid->next;
+   if(!member) return; // no definition
+
+   hashstack fields = new_hashstack();
+   for(; member; member = member->next){
+      astree field = basetype(member);
+      field->attributes |= ATTR_FIELD;
+      hsnode dupfield = find_hashstack(fields, field->lexeme);
+      if(dupfield) {
+         eprintf("field %s(%d.%d.%d.) is already declared\n",
+               dupfield->lexeme,
+               dupfield->filenr,
+               dupfield->linenr,
+               dupfield->offset);
+      }else{
+         hsnode fieldsym = add_hashstack(fields, field->lexeme);
+         fieldsym->filenr = field->filenr;
+         fieldsym->linenr = field->linenr;
+         fieldsym->offset = field->offset;
+         fieldsym->attributes = field->attributes;
+         field->sym = fieldsym;
+      }
+   }
+   found->fields = fields;
+}
 //void enterblock(){ 
 //   ident->blocknr++;
 //}
@@ -232,24 +250,32 @@ int main (void) {
 ////or found: but i'm not the current global scope
 ////
 //
-//void valdeclar(astree root){
-//   astree type = root->first;
-//   astree ident = basetype(type);
-//   ident->attributes |= ATTR_LVALUE;
+
+//Functions and variables share a same name space.
+//Functions are global, while variables can be global or local.
+//Global can't overwrite global.
+//Local variable can shadow global variable ONLY.
+//Local can't be collided with upper scope declaration.
 //
-//   hsnode identsym = find_hashstack(idents, root->lexeme);
-//   //if(ident && idents->blocknr == 0){
-//   if(identsym){  //ignore global case for now
-//      eprintf("Duplicate declaration %s (%d.%d.%d),  (%d.%d.%d)\n",
-//            root->lexeme,
-//            root->filenr, root->linenr, root->offset,
-//            ident->filenr, ident->linenr, ident->offset);
-//      return;
-//   } else{
-//      identsym = push_hashstack(idents, ident);
-//   }
-//}
-//
+
+void valdeclar(astree root){
+   astree type = root->first;
+   astree ident = basetype(type);
+   ident->attributes |= ATTR_LVALUE;
+
+   hsnode identsym = find_hashstack(idents, root->lexeme);
+   //if(ident && idents->blocknr == 0){
+   if(identsym){  //ignore global case for now
+      eprintf("Duplicate declaration %s (%d.%d.%d),  (%d.%d.%d)\n",
+            root->lexeme,
+            root->filenr, root->linenr, root->offset,
+            ident->filenr, ident->linenr, ident->offset);
+      return;
+   } else{
+      //identsym = push_hashstack(idents, ident);
+   }
+}
+
 //
 //
 //void preproc(astree root){

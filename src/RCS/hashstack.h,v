@@ -1,4 +1,36 @@
-#ifndef __HASH_STACK_H__
+head	1.3;
+access;
+symbols;
+locks;
+comment	@ * @;
+
+
+1.3
+date	2014.06.09.07.32.21;	author -;	state -;
+branches;
+next	1.2;
+
+1.2
+date	2014.06.08.10.18.56;	author -;	state -;
+branches;
+next	1.1;
+
+1.1
+date	2014.06.08.07.52.12;	author -;	state -;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@-
+@
+text
+@#ifndef __HASH_STACK_H__
 #define __HASH_STACK_H__
 
 #include <stdlib.h>
@@ -6,6 +38,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "auxlib.h"
+
 typedef struct hsnode *hsnode;
 typedef struct hashstack *hashstack;
 
@@ -54,8 +87,68 @@ void print_hashstack (hashstack this, FILE *out, char detail);
 hsnode push_hashstack (hashstack this, const char *key);
 hsnode pop_hashstack (hashstack this);
 hsnode peak_hashstack (hashstack this);
-//void list_hashstack (hashstack this, FILE *out);
+void list_hashstack (hashstack this, FILE *out);
 
 
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.3 2014-06-09 00:32:21-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.2 2014-06-08 03:18:56-07 - - $")
 #endif
+@
+
+
+1.2
+log
+@-
+@
+text
+@d5 1
+a5 1
+#include <stdint.h> //for int types
+d11 10
+a20 7
+typedef struct hashstack{
+   size_t size;            //number of slots
+   size_t load;            //number of elements
+   hsnode *chains;
+   hsnode stack;          //itemifier stackA
+   hsnode gblhead;        //ptr to global stack block
+}hashstack;
+d23 1
+a23 5
+   const char* lexeme;                // get from stringtable
+   unsigned long attributes;
+
+   hashstack *structtablenode;   //TODO: if typeid is is present
+   hashstack *fields;        
+d30 6
+a35 3
+   struct hsnode *paramlist;     // a list of parameters
+   struct hsnode *link;          // hash link for channing
+   struct hsnode *stacknext;     // a link for stack
+d38 22
+a59 2
+void print_hashstack (hashstack *this, FILE *out, char detail);
+hashstack *new_hashstack (void);
+d61 1
+a61 7
+hsnode add_hashstack (hashstack *this, const char *item);
+hsnode find_hashstack (hashstack *this, const char *item);
+hsnode rm_hashstack (hashstack *this, const char *item);
+
+hsnode push_hashstack (hashstack *this, const hsnode *item);
+hsnode pop_hashstack (hashstack *this);
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.1 2014-06-08 00:52:12-07 - - $")
+@
+
+
+1.1
+log
+@-
+@
+text
+@d24 1
+a24 1
+   hashstack *fieldtable;        
+d45 1
+a45 1
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.4 2014-06-07 20:15:50-07 - - $")
+@

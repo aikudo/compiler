@@ -1,0 +1,6 @@
+stringset[   4]:                     59 0x15ed790->";"
+stringset[   7]:                    106 0x15ed660->"j"
+                      27946910647721622 0x15ed500->"char"
+load_factor = 0.273
+bucket_count = 11
+max_bucket_size = 2

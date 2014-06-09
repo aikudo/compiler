@@ -10,7 +10,12 @@ struct astree_rep {
    int linenr;          // line number from source code
    int offset;          // offset of token with current line
    char *lexeme;        // pointer to lexeme from a string table
-   hsnode *attrib;      // attrib obtained during sematics 
+   unsigned long attributes;
+   int blocknr;
+   astree structid;     // points the struct-type it used
+   //char *structid;     // points the struct-type it used
+   hsnode sym;          // hook to symbol table node for easier dump
+
    astree first;        // first child node of this node
    astree last;         // last child node of this node
    astree next;         // next younger sibling of this node

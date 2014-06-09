@@ -1,0 +1,33 @@
+head	1.1;
+access;
+symbols;
+locks;
+comment	@ * @;
+
+
+1.1
+date	2014.06.08.07.52.12;	author -;	state -;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@-
+@
+text
+@#ifndef __SYMTABLE_H__
+#define __SYMTABLE_H__
+
+#include "lyutils.h"
+#include "hashstack.h"
+
+void buildsym(void);
+
+RCSH(SYMTABLE_H,"$Id: symtable.h,v 1.1 2014-06-06 22:43:02-07 - - $")
+#endif
+@
