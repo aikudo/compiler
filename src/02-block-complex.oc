@@ -1,0 +1,29 @@
+int global = 4;
+{ 
+   int blockone = 1;
+   bool flag = 1;
+   string global = 1; //overwrite the global
+
+   {
+      int blocktwoint = 2;
+      {
+         int blocktwoint = 5;  //error
+      }
+
+      bool blocktwobool = 2;
+
+      {
+         int good = 6;
+         char global = 'a'; // error
+      }
+
+   }
+
+   int blockonestill = 3;
+   
+   {
+      int anotherblock = 3;
+   }
+}
+
+int anotherglobal = 5;
