@@ -92,45 +92,44 @@ void print_hashstack (hashstack this, FILE *out, char detail) {
    }
 }
 
-hsnode push_hashstack (hashstack this, const char *item){
-   //assert (this != NULL && item != NULL);
-   hsnode node = add_hashstack(this, item);
-   node->next = this->stack;
-   this->stack = node;
-   return node;
+hsnode rm_hashstack (hashstack this, const char *key){
+   assert (this != NULL);
+   uintptr_t hashcode = (uintptr_t) key % this->size;
+   hsnode itor = this->chains[hashcode];
+   hsnode prev;
+   while(itor){
+      if(itor->lexeme == key) break;
+      else{
+         prev = itor;
+         itor = itor->link;
+      }
+   }
+   if(itor != NULL){
+      if(itor == this->chains[hashcode])
+         this->chains[hashcode] = itor->link;
+      else if(itor->link == NULL) prev->link = NULL;
+      else prev->link = itor->link;
+      this->load--;
+   }
+   return itor;
 }
 
 hsnode pop_hashstack (hashstack this){
    assert(this != NULL);
    hsnode node = this->stack;
-   if(node != NULL){ //remove it from a hash table 
-      uintptr_t hashcode = (uintptr_t) node->lexeme % this->size;
-      hsnode itor = this->chains[hashcode];
-      hsnode prev;
-      while(itor){
-         if(itor->lexeme == node->lexeme) break;
-         else{
-            prev = itor;
-            itor = itor->link;
-         }
-      }
-      assert(itor != NULL); //item must be found in both stack & hash
-      if(itor == this->chains[hashcode]){          // on first node
-         this->chains[hashcode] = itor->link;
-      }else if(itor->link == NULL){                // on last node
-         prev->link = NULL;
-      }else{
-         prev->link = itor->link;
-      }
-      this->load--;
-      this->stack = this->stack->next;
-   }
+   if(node != NULL) this->stack = node->next;
    return node;
 }
 
-hsnode peak_hashstack (hashstack this){ //basically useless function
+void push_hashstack (hashstack this, hsnode node){
+   assert (this != NULL && node != NULL);
+   node->next = this->stack;
+   this->stack = node;
+}
+
+hsnode peak_hashstack (hashstack this){ 
    assert(this != NULL);
    return (this->stack);
 }
 
-RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.2 2014-06-09 00:32:21-07 - - $")
+RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.3 2014-06-09 06:45:49-07 - - $")

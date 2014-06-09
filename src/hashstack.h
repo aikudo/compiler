@@ -24,7 +24,7 @@ struct hsnode{
    int filenr;                   // index into filename stack
    int linenr;                   // line number from source code
    int offset;                   // offset of token with current line
-   int blocknr;                  // indicate block/scope level
+   int block;                  // indicate block/scope level
 
    unsigned long attributes;     // do i need this? dupped in AST
    hashstack fields;             // if this is struct, it has fields
@@ -46,16 +46,30 @@ void delete_hashstack (hashstack *this); //ptr will be nulled
 //
 //hash operations
 hsnode add_hashstack (hashstack this, const char *key);
+
+//
+// Find an item via a key. Return NULL if not found.
+//
 hsnode find_hashstack (hashstack this, const char *key);
+
+//
+// Remove a node with a given key from a hash table
+// Return NULL if not found. Otherwise, 
+// it returns the node to be free by the caller.
+//
 hsnode rm_hashstack (hashstack this, const char *key);
+
+//
+// Print out stats and all keys if detail is set.
+//
 void print_hashstack (hashstack this, FILE *out, char detail);
 
 //stack operations
-hsnode push_hashstack (hashstack this, const char *key);
 hsnode pop_hashstack (hashstack this);
+void push_hashstack (hashstack this, hsnode node);
 hsnode peak_hashstack (hashstack this);
 //void list_hashstack (hashstack this, FILE *out);
 
 
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.4 2014-06-09 03:42:55-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.6 2014-06-09 16:21:28-07 - - $")
 #endif

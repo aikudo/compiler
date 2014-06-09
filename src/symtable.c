@@ -7,6 +7,47 @@
 typedef unsigned long bitset_t;
 hashstack idents, types;
 
+#define BZ 1024
+char strbuff[BZ];
+
+#define GLOBAL 0
+struct{
+   int *blocks;
+   int size;
+   int last;
+   int globalcount;
+} blockcount_stack = {NULL, 0, -1, -1};
+
+int pushblock(void){
+   int block = ++blockcount_stack.globalcount;
+   if (blockcount_stack.blocks == NULL) {
+      blockcount_stack.size = 16;
+      blockcount_stack.blocks = 
+         malloc (blockcount_stack.size * sizeof (int));
+      assert (blockcount_stack.blocks != NULL);
+   }else if (blockcount_stack.last == blockcount_stack.size - 1){
+      blockcount_stack.size *= 2;
+      blockcount_stack.blocks = realloc (blockcount_stack.blocks,
+                              blockcount_stack.size * sizeof(int));
+      assert (blockcount_stack.blocks != NULL);
+   }
+   blockcount_stack.blocks[++blockcount_stack.last] = block;
+   return block;
+}
+
+int topblock(void){
+   assert(blockcount_stack.last > -1);
+   return blockcount_stack.blocks[blockcount_stack.last];
+}
+
+int popblock(void){
+   assert(blockcount_stack.last > -1);
+   int block = blockcount_stack.blocks[blockcount_stack.last];
+   blockcount_stack.last--;
+   return block;
+}
+
+
 
 enum {
    ATTR_INDEX_VOID     =  0,
@@ -179,6 +220,7 @@ void setattr(hsnode node, astree item){
    node->filenr = item->filenr;
    node->linenr = item->linenr;
    node->offset = item->offset;
+   node->block  = item->block;
    node->attributes = item->attributes;
    item->sym = node;
 }
@@ -192,6 +234,10 @@ hsnode add(hashstack this, astree item){
    setattr(node,item);
    return node;
 }
+/*
+hsnode addpush(hashstack this, astree item){
+   add(this,item)
+*/
 
 //
 //Duplicated complain:  dup(tag, original, duplicate)
@@ -199,16 +245,28 @@ hsnode add(hashstack this, astree item){
 //void dcomplain(char *tag, hsnode ori, hsnode dup){ //orig->sym
 
 void dcomplain(char *tag, hsnode ori, astree dup){
-   eprintf("DUP:%s %s(%d.%d.%d) is already defined at (%d.%d.%d).\n",
+   eprintf("dup:%s %s(%d.%d.%d) is already defined at (%d.%d.%d).\n",
          tag, dup->lexeme, dup->filenr, dup->linenr, dup->offset,
                            ori->filenr, ori->linenr, ori->offset);
+}
+
+char *tostr(hsnode it){
+   snprintf(strbuff, BZ, "%s(%d.%d.%d)",
+         it->lexeme, it->filenr, it->linenr, it->offset);
+   return strbuff;
+}
+
+char *atostr(astree it){
+   snprintf(strbuff, BZ, "%s(%d.%d.%d)",
+         it->lexeme, it->filenr, it->linenr, it->offset);
+   return strbuff;
 }
 
 //
 //Error complain: err(message, item)
 //
 void ecomplain(char *errmsg, hsnode it){
-   eprintf("ERR:%s(%d.%d.%d): %s\n",
+   printf("%s(%d.%d.%d): %s\n",
          it->lexeme, it->filenr, it->linenr, it->offset, errmsg);
 }
 
@@ -236,31 +294,33 @@ void structblock(astree root){
       if(orig) {
          dcomplain("field", orig, field);
       }else{
-         add(fields, field);
+         hsnode addedfield = add(fields, field);
+         push_hashstack(fields, addedfield);
       }
    }
    setattr(found, typeid);
    found->fields = fields;
 }
 
-//void enterblock(){ 
-//   ident->blocknr++;
-//}
-//
-//void exitblock(){
-//
-//   ident->blocknr;
-//}
-//
-//
-////only need to process the first child
-//// char a = 3; // ->proccess a
-//// 
-////good case: not found
-////or found: but i'm not the current global scope
-////
-//
+void enterblock(){ 
+   idents->block = pushblock();
+   DEBUGF('b', "enter block%d\n", idents->block);
+}
 
+//
+// pop all nodes 1
+void exitblock(){
+   int block = idents->block;
+   hsnode stack = idents->stack;
+   while(stack){
+      DEBUGF('s', "blk:%d, %s\n", block, tostr(stack));
+      stack = stack->next;
+   }
+   idents->block = popblock();
+   DEBUGF('b', "exit block%d\n", idents->block);
+}
+
+//
 //Functions and variables share a same name space.
 //Functions are global, while variables can be global or local.
 //Global can't overwrite global.
@@ -268,30 +328,38 @@ void structblock(astree root){
 //Local can't be collided with upper scope declaration.
 //
 
-void valdeclar(astree root){
+void vardecl (astree root){
    astree type = root->first;
    astree ident = basetype(type);
-   ident->attributes |= ATTR_LVALUE;
-
-   hsnode identsym = find_hashstack(idents, root->lexeme);
-   //if(ident && idents->blocknr == 0){
-   if(identsym){  //ignore global case for now
-      eprintf("Duplicate declaration %s (%d.%d.%d),  (%d.%d.%d)\n",
-            root->lexeme,
-            root->filenr, root->linenr, root->offset,
-            ident->filenr, ident->linenr, ident->offset);
-      return;
-   } else{
-      //identsym = push_hashstack(idents, ident);
+   DEBUGF('v', "bid:%d %s %s\n",
+         topblock(), type->lexeme, ident->lexeme);
+   hsnode orig = find_hashstack(idents, ident->lexeme);
+   if(orig){
+      printf("FOUND:%s block%d\n", tostr(orig), orig->block);
+      if(orig->block != GLOBAL){
+         //printf("DUP:%s\n", atostr(ident));
+         dcomplain("vardecl", orig, ident);
+         return;
+      }else{ //shadow the global variable
+         hsnode globalident = rm_hashstack(idents, orig->lexeme);
+         push_hashstack(idents, globalident); //save global ident
+      }
    }
+   ident->attributes |= ATTR_LVALUE;
+   ident->block = topblock();
+   hsnode newident = add(idents, ident);
+   push_hashstack(idents, newident);
 }
 
 
 
 void preproc(astree root){
    switch(root->symbol){
+      case BLOCK:
+         enterblock();
+         break;
       case VARDECL:
-         valdeclar(root);
+         vardecl(root);
          break;
       case STRUCT:
          structblock(root);
@@ -302,9 +370,6 @@ void preproc(astree root){
       case PARAM:
          DEBUGF('P',"PRE on PARAM:[%s] \n", root->lexeme);
          break;
-      case BLOCK:
-         DEBUGF('P',"PRE on BLOCK:[%s] \n", root->lexeme);
-         break;
       case FUNCTION:
          //functionblock(root);
          DEBUGF('P',"PRE on FUNCTION:[%s] \n", root->lexeme);
@@ -314,18 +379,21 @@ void preproc(astree root){
 
 void postproc(astree root){
    switch(root->symbol){
-      case PROTOTYPE:
-         DEBUGF('P',"POST on PROTOTYPE:[%s] \n", root->lexeme);
-         break;
-      case PARAM:
-         DEBUGF('P',"POST on PARAM:[%s] \n", root->lexeme);
-         break;
       case BLOCK:
-         DEBUGF('P',"POST on BLOCK:[%s] \n", root->lexeme);
+         exitblock();
          break;
-      case FUNCTION:
-         DEBUGF('P',"POST on FUNCTION:[%s] \n", root->lexeme);
-         break;
+//      case PROTOTYPE:
+//         DEBUGF('P',"POST on PROTOTYPE:[%s] \n", root->lexeme);
+//         break;
+//      case PARAM:
+//         DEBUGF('P',"POST on PARAM:[%s] \n", root->lexeme);
+//         break;
+//      case BLOCK:
+//         DEBUGF('P',"POST on BLOCK:[%s] \n", root->lexeme);
+//         break;
+//      case FUNCTION:
+//         DEBUGF('P',"POST on FUNCTION:[%s] \n", root->lexeme);
+//         break;
    }
 }
 
@@ -336,7 +404,7 @@ void traverse(astree node){
          child = child->next){
       preproc(child);
       traverse(child);
-      //postproc(child);
+      postproc(child);
    }
 }
 
@@ -350,7 +418,7 @@ void printsym(astree node){
    if(node == NULL) return;
 
    if(is_ident(node->attributes)){
-      printf("%*s%s: ", node->blocknr * 3, "", node->lexeme);
+      printf("%*s%s: ", node->block * 3, "", node->lexeme);
       print_attributes (node->attributes);
       if(node->structid){
          printf(" {%s}", node->structid->lexeme);
@@ -370,12 +438,14 @@ void printsym(astree node){
 void buildsym(void){
    idents = new_hashstack();
    types = new_hashstack();
+   pushblock(); //3.1 b) global node is set to 0.
 
    printf("root %p\n", yyparse_astree);
    traverse(yyparse_astree);
-   printf("---------------------\n\n\n");
    printsym(yyparse_astree);
+
+   //exitblock();
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.5 2014-06-09 05:03:17-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.6 2014-06-09 16:21:28-07 - - $")
