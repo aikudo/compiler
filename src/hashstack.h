@@ -47,6 +47,8 @@ void delete_hashstack (hashstack *this); //ptr will be nulled
 //hash operations
 hsnode add_hashstack (hashstack this, const char *key);
 
+//insert a node to hash. No allocation, no new
+hsnode insert_hashstack(hashstack this, hsnode node);
 //
 // Find an item via a key. Return NULL if not found.
 //
@@ -71,5 +73,5 @@ hsnode peak_hashstack (hashstack this);
 //void list_hashstack (hashstack this, FILE *out);
 
 
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.6 2014-06-09 16:21:28-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.7 2014-06-09 23:40:22-07 - - $")
 #endif

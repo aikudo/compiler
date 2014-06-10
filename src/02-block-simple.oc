@@ -2,9 +2,14 @@ int global = 4;
 { 
    int blockone = 1;
    bool flag = 1;
+   { 
+      int nested = 1;
+      bool another = 1;
+   }
    char blah = 'a';
 
 }
+
 { 
    int blockone = 1;
    bool flag = 1;

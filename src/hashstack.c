@@ -28,6 +28,7 @@ hsnode find_hashstack (hashstack this, const char *item){
 }
 
 
+
 hsnode add_hashstack (hashstack this, const char *item) {
    assert (this != NULL && item != NULL);
    DEBUGF ('H', "adding %p %s\n", this, item);
@@ -65,6 +66,16 @@ hsnode add_hashstack (hashstack this, const char *item) {
    this->load++;
    return node;
 }
+
+hsnode insert_hashstack(hashstack this, hsnode node){
+   assert (this !=NULL && node != NULL);
+   uintptr_t hashcode  = (uintptr_t) node->lexeme % this->size;
+   node->link = this->chains[hashcode];
+   this->chains[hashcode] = node;
+   this->load++;
+   return node;
+}
+
 
 void print_hashstack (hashstack this, FILE *out, char detail) {
    assert (this != NULL && out != NULL);
@@ -132,4 +143,4 @@ hsnode peak_hashstack (hashstack this){
    return (this->stack);
 }
 
-RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.3 2014-06-09 06:45:49-07 - - $")
+RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.4 2014-06-09 23:40:22-07 - - $")

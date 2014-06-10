@@ -32,6 +32,7 @@ int pushblock(void){
       assert (blockcount_stack.blocks != NULL);
    }
    blockcount_stack.blocks[++blockcount_stack.last] = block;
+   idents->block = block;
    return block;
 }
 
@@ -42,8 +43,8 @@ int topblock(void){
 
 int popblock(void){
    assert(blockcount_stack.last > -1);
-   int block = blockcount_stack.blocks[blockcount_stack.last];
-   blockcount_stack.last--;
+   int block = blockcount_stack.blocks[--blockcount_stack.last];
+   idents->block = block;
    return block;
 }
 
@@ -303,21 +304,34 @@ void structblock(astree root){
 }
 
 void enterblock(){ 
-   idents->block = pushblock();
+   pushblock();
    DEBUGF('b', "enter block%d\n", idents->block);
 }
 
 //
-// pop all nodes 1
+// exiting a block will clear out current stack frame
+// collided global variables are restored back to the
+// hash table.
+//
 void exitblock(){
-   int block = idents->block;
-   hsnode stack = idents->stack;
-   while(stack){
-      DEBUGF('s', "blk:%d, %s\n", block, tostr(stack));
-      stack = stack->next;
-   }
-   idents->block = popblock();
-   DEBUGF('b', "exit block%d\n", idents->block);
+   DEBUGF('b', "exiting block%d\n", idents->block);
+   popblock();
+   DEBUGF('b', "popped, exit now block%d\n", idents->block);
+   hsnode node;
+   //pop all node bigger than current idents->block.
+   //except for global nodes with block:0 which will 
+   //be restored back into the hash table.
+   //
+   do{
+      node = peak_hashstack(idents);
+      if(node->block == idents->block) break;
+      if(node->block == GLOBAL){
+         insert_hashstack(idents, node); //insert back to hash
+      }
+      node = pop_hashstack(idents);
+      assert( rm_hashstack(idents, node->lexeme) != NULL);
+      DEBUGF('s', "removeblk:%d, %s\n", node->block, tostr(node));
+   }while(1);
 }
 
 //
@@ -335,9 +349,7 @@ void vardecl (astree root){
          topblock(), type->lexeme, ident->lexeme);
    hsnode orig = find_hashstack(idents, ident->lexeme);
    if(orig){
-      printf("FOUND:%s block%d\n", tostr(orig), orig->block);
       if(orig->block != GLOBAL){
-         //printf("DUP:%s\n", atostr(ident));
          dcomplain("vardecl", orig, ident);
          return;
       }else{ //shadow the global variable
@@ -448,4 +460,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.6 2014-06-09 16:21:28-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.7 2014-06-09 23:40:22-07 - - $")
