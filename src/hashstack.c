@@ -143,4 +143,4 @@ hsnode peak_hashstack (hashstack this){
    return (this->stack);
 }
 
-RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.4 2014-06-09 23:40:22-07 - - $")
+RCSC(HASHSTACK_C,"$Id: hashstack.c,v 1.1 2014-06-10 00:44:31-07 - - $")

@@ -36,6 +36,7 @@ int pushblock(void){
    return block;
 }
 
+//must call this for all entries into idents hashstack
 int topblock(void){
    assert(blockcount_stack.last > -1);
    return blockcount_stack.blocks[blockcount_stack.last];
@@ -358,7 +359,7 @@ void vardecl (astree root){
       }
    }
    ident->attributes |= ATTR_LVALUE;
-   ident->block = topblock();
+   ident->block = topblock();  //block-stamp the ident
    hsnode newident = add(idents, ident);
    push_hashstack(idents, newident);
 }
@@ -460,4 +461,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.7 2014-06-09 23:40:22-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.1 2014-06-10 00:44:31-07 - - $")

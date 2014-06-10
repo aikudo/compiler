@@ -14,5 +14,5 @@ hashtable *newhash (void);
 void delhash (hashtable **hashset);
 char *inserthash (hashtable **hashset, const char *string);
 void dumphash(hashtable *hp, FILE *out);
-RCSH(STRINGTABLE_H,"$Id: stringtable.h,v 1.1 2014-06-08 00:52:12-07 - - $")
+RCSH(STRINGTABLE_H,"$Id: stringtable.h,v 1.1 2014-06-10 00:44:31-07 - - $")
 #endif
