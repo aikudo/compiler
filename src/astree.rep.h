@@ -11,7 +11,7 @@ struct astree_rep {
    int offset;          // offset of token with current line
    char *lexeme;        // pointer to lexeme from a string table
    unsigned long attributes;
-   int blocknr;
+   int block;
    astree structid;     // points the struct-type it used
    //char *structid;     // points the struct-type it used
    hsnode sym;          // hook to symbol table node for easier dump

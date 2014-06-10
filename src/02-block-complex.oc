@@ -24,6 +24,8 @@ int global = 4;
    {
       int anotherblock = 3;
    }
+
+   //should remove global on string
 }
 
 int anotherglobal = 5;
