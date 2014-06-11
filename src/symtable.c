@@ -48,9 +48,6 @@ int popblock(void){
    idents->block = block;
    return block;
 }
-
-
-
 enum {
    ATTR_INDEX_VOID      =  0,
    ATTR_INDEX_BOOL      =  1,
@@ -169,6 +166,40 @@ void prnerr(char *errmsg, hsnode it){
    eprintf("%s: %s\n", tostr(it), errmsg);
 }
 
+void enterblock(){ 
+   pushblock();
+   DEBUGF('b', "enter block%d\n", idents->block);
+}
+
+//
+// exiting a block will clear out current stack frame
+// collided global variables are restored back to the
+// hash table.
+//
+
+void exitblock(){
+   DEBUGF('b', "exiting block%d\n", idents->block);
+   popblock();
+   DEBUGF('b', "popped, exit now block%d\n", idents->block);
+   hsnode node;
+   //pop all node bigger than current idents->block.
+   //except for global nodes with block:0 which will 
+   //be restored back into the hash table.
+   //
+   do{
+      node = peak_hashstack(idents);
+      if(node == NULL) break;
+      if(node->block == idents->block) break;
+      if(node->block == GLOBAL){
+         insert_hashstack(idents, node); //insert back to hash
+      }
+      node = pop_hashstack(idents);
+      assert( rm_hashstack(idents, node->lexeme) != NULL);
+      DEBUGF('s', "removeblk:%d, %s\n", node->block, tostr(node));
+   }while(1);
+}
+
+
 bool checktype(astree type, astree ident){
    if(find_hashstack(types, type->lexeme)){
       return true;
@@ -279,40 +310,6 @@ void structblock(astree root){
    setattr(found, typeid);
    found->fields = fields;
 }
-
-void enterblock(){ 
-   pushblock();
-   DEBUGF('b', "enter block%d\n", idents->block);
-}
-
-//
-// exiting a block will clear out current stack frame
-// collided global variables are restored back to the
-// hash table.
-//
-
-void exitblock(){
-   DEBUGF('b', "exiting block%d\n", idents->block);
-   popblock();
-   DEBUGF('b', "popped, exit now block%d\n", idents->block);
-   hsnode node;
-   //pop all node bigger than current idents->block.
-   //except for global nodes with block:0 which will 
-   //be restored back into the hash table.
-   //
-   do{
-      node = peak_hashstack(idents);
-      if(node == NULL) break;
-      if(node->block == idents->block) break;
-      if(node->block == GLOBAL){
-         insert_hashstack(idents, node); //insert back to hash
-      }
-      node = pop_hashstack(idents);
-      assert( rm_hashstack(idents, node->lexeme) != NULL);
-      DEBUGF('s', "removeblk:%d, %s\n", node->block, tostr(node));
-   }while(1);
-}
-
 //
 //Functions and variables share a same name space.
 //Functions are global, while variables can be global or local.
@@ -342,6 +339,34 @@ void vardecl (astree root){
    hsnode newident = add(idents, ident);
    push_hashstack(idents, newident);
 }
+
+
+hsnode attachparam(astree fn, astree paramlist, bool tmpscope){
+
+   hashstack tmphash = tmpscope ? new_hashstack() : idents;
+
+   hsnode fn1 = add(tmphash, fn);
+
+   if(!tmpscope) enterblock();
+
+   for( astree itor = paramlist->first; itor; itor = itor->next){
+      astree param = basetype(itor);
+      param->attributes |= ATTR_PARAM;
+      param->attributes |= ATTR_LVALUE;
+      hsnode paramdup = find_hashstack(tmphash, param->lexeme);
+      if(paramdup) prndup("param", paramdup, param);
+      else{
+         hsnode paramident = add(tmphash, param);
+         push_hashstack(tmphash, paramident);
+         paramident->param = fn1->param; //threading params
+         fn1->param = paramident;
+      }
+   }
+   return fn1;
+}
+
+
+
 
 //
 // A function has its name at the head of the list
@@ -375,13 +400,14 @@ bool match(hsnode this, hsnode that){
 
       match = this->lexeme == that->lexeme &&
          this->attributes == that->attributes;
-//
-//      printf("%d:%d check %s: %s ", i++, match, 
+
+//      printf ("%d:%d check %s: %s ", i++, match, 
 //            tostr(this), tostr(that));
 //      print_attributes(this->attributes);
 //      print_attributes(that->attributes);
 //      printf("\n");
-//      printf("details %p %p %lu %lu\n", this->lexeme, that->lexeme,
+//      printf( "details %p %p %lu %lu\n",
+//            this->lexeme, that->lexeme,
 //            this->attributes, that->attributes );
 
       if(!match) return false;
@@ -400,6 +426,7 @@ bool match(hsnode this, hsnode that){
 bool matchfunction(const astree const fn, 
       const astree const paramlist, const hsnode const fn2){
    
+   /*
    hashstack tmphash = new_hashstack();
    hsnode fn1 = add(tmphash, fn);
 
@@ -416,7 +443,9 @@ bool matchfunction(const astree const fn,
          fn1->param = paramident;
       }
    }
+   */
 
+   hsnode fn1 = attachparam(fn, paramlist, 1);
    bool ismatch = match(fn1,fn2);
    //delete tmphash & clean other malloc/new
    return ismatch;
@@ -653,4 +682,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.7 2014-06-11 01:31:56-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.8 2014-06-11 01:55:03-07 - - $")
