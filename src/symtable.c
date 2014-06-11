@@ -117,13 +117,18 @@ bitset_t bitset (int attribute_index) {
 }
 
 
-void print_attributes (bitset_t attributes) {
+char * print_attributes (bitset_t attributes) {
    ssize_t size = sizeof attr_names / sizeof *attr_names;
+   char buff[100];
+
+   strbuff[0] = 0;
    for (int index = 0; index < size; ++index) {
       if (attributes & bitset (index)) {
-         printf (" %s", attr_names [index]);
+         snprintf(buff, 100, " %s", attr_names [index]);
+         strncat(strbuff,buff,BZ);
       }
    }
+   return(strdup(strbuff));
 }
 
 bool is_primitive (bitset_t attributes) {
@@ -177,26 +182,21 @@ void enterblock(){
 // hash table.
 //
 
-void exitblock(){
-   DEBUGF('b', "exiting block%d\n", idents->block);
+void exitblock(astree root){
    popblock();
-   DEBUGF('b', "popped, exit now block%d\n", idents->block);
-   hsnode node;
+   DEBUGF('b', "exit. block is now%d on %s\n", idents->block, atostr(root));
+   hsnode node = peak_hashstack(idents);
    //pop all node bigger than current idents->block.
    //except for global nodes with block:0 which will 
    //be restored back into the hash table.
-   //
-   do{
-      node = peak_hashstack(idents);
-      if(node == NULL) break;
-      if(node->block == idents->block) break;
-      if(node->block == GLOBAL){
-         insert_hashstack(idents, node); //insert back to hash
-      }
+
+   while( node &&  node->block != idents->block){
+      if(node->block == GLOBAL) insert_hashstack(idents, node);
       node = pop_hashstack(idents);
       assert( rm_hashstack(idents, node->lexeme) != NULL);
-      DEBUGF('s', "removeblk:%d, %s\n", node->block, tostr(node));
-   }while(1);
+      DEBUGF('s', "REMOVE blk:%d, %s\n", node->block, tostr(node));
+      node = peak_hashstack(idents);
+   }
 }
 
 
@@ -334,7 +334,7 @@ void vardecl (astree root){
          push_hashstack(idents, globalident); //save global ident
       }
    }
-   ident->attributes |= ATTR_LVALUE;
+   ident->attributes |= ATTR_LVALUE | ATTR_VARIABLE;
    ident->block = topblock();  //block-stamp the ident
    hsnode newident = add(idents, ident);
    push_hashstack(idents, newident);
@@ -349,17 +349,21 @@ hsnode attachparam(astree fn, astree paramlist, bool tmpscope){
    if(!tmpscope) enterblock();
    for( astree itor = paramlist->first; itor; itor = itor->next){
       astree param = basetype(itor);
-      param->attributes |= ATTR_PARAM;
-      param->attributes |= ATTR_LVALUE;
+      param->attributes |= ATTR_PARAM | ATTR_LVALUE | ATTR_VARIABLE;
+      //printf("topblock %d scope %d\n", topblock(), tmpscope);
+      param->block = topblock();
       hsnode paramdup = find_hashstack(tmphash, param->lexeme);
       if(paramdup) prndup("param", paramdup, param);
       else{
          hsnode paramident = add(tmphash, param);
+         //printf("added node %s %d\n", tostr(paramident),
+               //paramident->block);
          push_hashstack(tmphash, paramident);
          paramident->param = fn1->param; //threading params
          fn1->param = paramident;
       }
    }
+
    return fn1;
 }
 
@@ -386,6 +390,25 @@ bool match(hsnode this, hsnode that){
 //         this->attributes == that->attributes;
 //      if(!match) return false;
 
+//   hsnode it = this;
+//   printf("this: ");
+//   while (it){
+//      printf("%s ", tostr(it));
+//      print_attributes(it->attributes);
+//      printf("\n");
+//      it = it->param;
+//   }
+//
+//   it = that;
+//   printf("that: ");
+//   while (it){
+//      printf("%s ", tostr(it));
+//      print_attributes(it->attributes);
+//      printf("\n");
+//      it = it->param;
+//   }
+//
+
 
    if(this == NULL && that == NULL) return true;
    bool match = false;
@@ -399,14 +422,14 @@ bool match(hsnode this, hsnode that){
       match = this->lexeme == that->lexeme &&
          this->attributes == that->attributes;
 
-      printf ("%d:%d check %s: %s ", i++, match, 
-            tostr(this), tostr(that));
-      print_attributes(this->attributes);
-      print_attributes(that->attributes);
-      printf("\n");
-      printf( "details %p %p %lu %lu\n",
-            this->lexeme, that->lexeme,
-            this->attributes, that->attributes );
+//      printf ("%d:%d check %s: %s ", i++, match, 
+//            tostr(this), tostr(that));
+//      print_attributes(this->attributes);
+//      print_attributes(that->attributes);
+//      printf("\n");
+//      printf( "details %p %p %lu %lu\n",
+//            this->lexeme, that->lexeme,
+//            this->attributes, that->attributes );
 
       if(!match) return false;
       this = this->param;
@@ -414,7 +437,7 @@ bool match(hsnode this, hsnode that){
    }
 
    (void)i;
-   return match;
+   return match && (this == that) ;
 }
 
 //
@@ -427,6 +450,8 @@ bool matchfunction(const astree const fn,
 
    hsnode fn1 = attachparam(fn, paramlist, 1);
    bool ismatch = match(fn1,fn2);
+   if(ismatch) DEBUGF('M', "MATCH %s %s \n", tostr(fn1), tostr(fn2));
+   else DEBUGF('M', "NOTMATCH %s %s \n", tostr(fn1), tostr(fn2));
    //delete tmphash & clean other malloc/new
    return ismatch;
 }
@@ -499,11 +524,33 @@ void function(astree root){
          ident->attributes &= ~(ATTR_PROTOTYPE);
          ident->attributes |= ATTR_FUNCTION;
       }
+      enterblock();
       return;
    }
    hsnode fn = attachparam(ident, paramlist, false);
    ident->sym = fn;
 }
+
+void proto( astree root){
+   DEBUGF('F',"enter proto %s\n", atostr(root));
+   function(root);
+}
+
+void proto_exit( astree root){
+   DEBUGF('F',"exit proto %s\n", atostr(root));
+   exitblock(root);//this doesn't work
+}
+
+void func( astree root){
+   DEBUGF('F',"enter func %s\n", atostr(root));
+   function(root);
+}
+
+void func_exit( astree root){
+   DEBUGF('F',"exit func %s\n", atostr(root));
+   exitblock(root);
+}
+
 
 void preproc(astree root){
    switch(root->symbol){
@@ -517,8 +564,10 @@ void preproc(astree root){
          structblock(root);
          break;
       case PROTOTYPE:
+         proto(root);
+         break;
       case FUNCTION:
-         function(root);
+         func(root);
          break;
    }
 }
@@ -526,9 +575,14 @@ void preproc(astree root){
 void postproc(astree root){
    switch(root->symbol){
       case BLOCK:
+         exitblock(root);
+         break;
+
       case PROTOTYPE:
+         proto_exit(root);
+         break;
       case FUNCTION:
-         exitblock();
+         func_exit(root);
          break;
 
    }
@@ -551,22 +605,40 @@ bool is_ident(bitset_t attributes){
           | ATTR_TYPEID | ATTR_PARAM ));
 }
 
-void printsym(astree node){
+int indentoffset = 0;
+int indentstop = 0;
+void printsym(astree node, int height){
    if(node == NULL) return;
 
-   if(is_ident(node->attributes)){
-      printf("%*s%s: ", node->block * 3, "", node->lexeme);
-      print_attributes (node->attributes);
-      if(node->structid){
-         printf(" {%s}", node->structid->lexeme);
-      }
+   if (!indentstop) indentoffset++;
+   //printf("%*s%s: {%d} %s", (height - indentoffset) * 3, "",
+   //printf("%*s%s: {%d} %s", (height ) * 3, "",
+    //  atostr(node), node->block,  node->sym ? "SYMBOL" : "");
+   if(node->sym){
+   //printf("%14s", "SYMBOL");
+      indentstop = 1;
+      //printf("%*s\"%s\": {%d} %s\n", (height - indentoffset) * 3, "",
+      printf("%*s%s: {%d} %s\n", (height - indentoffset) * 3, "",
+            atostr(node), node->block,
+            print_attributes(node->attributes));
 
-      printf("\n");
+      //if(node->attributes & ATTR_FIELD){
+      //   printf("
+
+      //print_attributes (node->attributes);
+      //if(node->structid){
+      //   printf(" {%s}", node->structid->lexeme);
+      //}
+      //if(node->sym) printf(" [%s %s]",
+      //      tostr(node->sym), print_attributes(node->sym->attributes));
+      //printf("\n");
+
    }
-
-   for (astree child = node->first; child != NULL;
-         child = child->next){
-      printsym(child);
+   //printf("\n");
+   for (astree child = node->first; child; child = child->next){
+      if(child->symbol == STRUCT) indentoffset--; //fixing struct indentation
+      printsym(child, height + 1);
+      if(child->symbol == STRUCT) indentoffset++;
       //postproc(child);
    }
 }
@@ -579,10 +651,10 @@ void buildsym(void){
 
    printf("root %p\n", yyparse_astree);
    traverse(yyparse_astree);
-   printsym(yyparse_astree);
+   printsym(yyparse_astree, 0);
 
    //exitblock();
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.11 2014-06-11 03:03:44-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.12 2014-06-11 15:38:49-07 - - $")
