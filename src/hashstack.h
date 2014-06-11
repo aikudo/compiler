@@ -24,12 +24,12 @@ struct hsnode{
    int filenr;                   // index into filename stack
    int linenr;                   // line number from source code
    int offset;                   // offset of token with current line
-   int block;                  // indicate block/scope level
+   int block;                    // indicate block/scope level
 
    unsigned long attributes;     // do i need this? dupped in AST
    hashstack fields;             // if this is struct, it has fields
    hsnode structid;              // points to the type it used
-   hsnode params;                // a list of parameters
+   hsnode param;                 // a list of parameters
    hsnode next;                  // a link for stack
    hsnode link;                  // hash link for hash-channing
 };
@@ -73,5 +73,5 @@ hsnode peak_hashstack (hashstack this);
 //void list_hashstack (hashstack this, FILE *out);
 
 
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.1 2014-06-10 00:44:31-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.2 2014-06-10 19:46:08-07 - - $")
 #endif

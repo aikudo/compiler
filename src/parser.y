@@ -1,11 +1,54 @@
 %{
-// $Id: parser.y,v 1.1 2014-06-10 00:44:31-07 - - $
+// $Id: parser.y,v 1.2 2014-06-10 19:46:08-07 - - $
+
+/*
+Metagrammar definitions
+
+    () :-> grouping
+    *  :-> zero or more
+    ?  :-> zero or one
+    +  :-> one or more
+    |  :-> alternative
+    'v':-> escaped character, used for paranthesis. e.g. '('
+
+All other undefinied are keywords/verbatim tokens from the input
+All CAPs are labels for tokens they represent.
+    
+Grammar:
+
+program     :->   (structdef | function | stmt)*
+structdef   :->   struct TYPEID { fielddecl* }
+fielddecl   :->   basetype []? FIELD
+basetype    :->   void | bool | char | int | string | TYPEID
+function    :->   identdecl '(' (identdecl (, identdecl)*)? ')' block
+identdecl   :->   basetype []? DECLID
+block       :->   { stmt* } | ;
+stmt        :->   block | vardecl | whstmt | ifelse | rtstmt | expr ;
+vardecl     :->   identdecl = expr ;
+whstmt      :->   while '(' expr ')' stmt
+ifelse      :->   if '(' expr ')' stmt (else stmt)?
+rtstmt      :->   return expr? ;
+expr        :->   expr BINOP expr 
+                  | UNOP expr 
+                  | allocator 
+                  | call
+                  | { expr } 
+                  | variable 
+                  | constant
+allocator   :->   new TYPEID '(' ')'
+                  | new string '(' expr ')'
+                  | new basetype [ expr ]
+call        :->   IDENT '(' (expr (, expr)*)? ')'
+variable    :->   IDENT | expr [ expr ] | expr . FIELD
+constant    :->   INTCON | CHARCON | STRINGCON | false | true | null
+
+*/
+
+
+
 
 #include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-
+#include <stdlib.h> #include <string.h> #include <stdio.h> 
 #include "lyutils.h"
 #include "astree.h"
 #include "astree.rep.h"
@@ -53,7 +96,6 @@ static void *yycalloc (size_t size);
 %start start
 
 %%
-
 start : program { yyparse_astree = $1; }
       ;
 
