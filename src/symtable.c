@@ -229,7 +229,7 @@ astree basetype(astree root){
 //
 
 
-void setattr(hsnode node, astree item){
+void setattr(hsnode node, const astree const item){
    node->filenr = item->filenr;
    node->linenr = item->linenr;
    node->offset = item->offset;
@@ -242,7 +242,7 @@ void setattr(hsnode node, astree item){
 //attributes from AST is copied to SYM node
 //AST node hooks to SYM node for easy printout and cleanup
 
-hsnode add(hashstack this, astree item){
+hsnode add(hashstack this, const astree const item){
    hsnode node = add_hashstack(this, item->lexeme);
    setattr(node,item);
    return node;
@@ -357,13 +357,69 @@ void vardecl (astree root){
 //
 //
 
-bool matchfunction(hsnode this, hsnode that){
-   bool match = true;
-   for(; this && that; this = this->param, that = that->param)
+bool match(hsnode this, hsnode that){
+//   for(; this && that; this = this->param, that = that->param){
+//      match = this->lexeme == that->lexeme &&
+//         this->attributes == that->attributes;
+//      if(!match) return false;
+
+
+   if(this == NULL && that == NULL) return true;
+   bool match = false;
+   bool started = false;
+   int i = 0;
+   for(;;){
+      if(!this) break;
+      if(!that) break;
+      if(!started){ match = true; started = true;}
+
       match = this->lexeme == that->lexeme &&
          this->attributes == that->attributes;
+//
+//      printf("%d:%d check %s: %s ", i++, match, 
+//            tostr(this), tostr(that));
+//      print_attributes(this->attributes);
+//      print_attributes(that->attributes);
+//      printf("\n");
+//      printf("details %p %p %lu %lu\n", this->lexeme, that->lexeme,
+//            this->attributes, that->attributes );
+
+      if(!match) return false;
+      this = this->param;
+      that = that->param;
+   }
 
    return match;
+}
+
+//
+//build a hsnode from astree nodes fn and paramlist.
+//then compare this new hsnode fn against fn2
+//
+//Requirement: Can't touch existed idents table and block counter
+bool matchfunction(const astree const fn, 
+      const astree const paramlist, const hsnode const fn2){
+   
+   hashstack tmphash = new_hashstack();
+   hsnode fn1 = add(tmphash, fn);
+
+   for( astree itor = paramlist->first; itor; itor = itor->next){
+      astree param = basetype(itor);
+      param->attributes |= ATTR_PARAM;
+      param->attributes |= ATTR_LVALUE;
+      hsnode paramdup = find_hashstack(tmphash, param->lexeme);
+      if(paramdup) prndup("param", paramdup, param);
+      else{
+         hsnode paramident = add(tmphash, param);
+         push_hashstack(tmphash, paramident);
+         paramident->param = fn1->param; //threading params
+         fn1->param = paramident;
+      }
+   }
+
+   bool ismatch = match(fn1,fn2);
+   //delete tmphash & clean other malloc/new
+   return ismatch;
 }
 
 //
@@ -415,7 +471,7 @@ void function(astree root){
          //matching prototype signature.
          //params are stored in reverse order
          //orig a prototype.
-         STUBPRINTF("matching & checking prototype");
+         STUBPRINTF("matching & checking prototype\n");
       }
    }
    
@@ -449,6 +505,59 @@ void functionexit(void){
 }
 
 
+void prototype(astree root){
+   astree type = root->first;
+   astree paramlist = type->next;
+   astree ident = basetype(type);
+   ident->block = GLOBAL;
+   ident->attributes |= ATTR_PROTOTYPE;
+
+   DEBUGF('F', "PROTO: %s %s\n", atostr(type), atostr(ident));
+
+   hsnode orig = find_hashstack(idents, ident->lexeme);
+
+   char matchcheck = 0;
+   if(orig){
+      if(orig->attributes & ATTR_FUNCTION){
+         prndup("function", orig, ident);
+         return;
+      }else{
+         matchcheck = 1;
+         //matching prototype signature.
+         //params are stored in reverse order
+         //orig a prototype.
+         STUBPRINTF("matching & checking prototype\n");
+      }
+   }
+
+//printf("PROTO: orig vs orig %d\n", (int) match(orig,orig));
+   if(matchcheck){
+      printf("PROTO: new vs orig %d\n",
+            (int) matchfunction(ident,paramlist, orig));
+   }
+
+
+   /*
+   hashstack tmphash = new_hashstack();
+   hsnode fnident = add(tmphash, ident); //prevent collision
+   //building a paramlist
+   //
+   for( astree itor = paramlist->first; itor; itor = itor->next){
+      astree param = basetype(itor);
+      param->attributes |= ATTR_PARAM;
+      param->attributes |= ATTR_LVALUE;
+      hsnode paramdup = find_hashstack(tmphash, param->lexeme);
+      if(paramdup) prndup("param", paramdup, param);
+      else{
+         hsnode paramident = add(tmphash, param);
+         push_hashstack(tmphash, paramident);
+         paramident->param = fnident->param; //threading params
+         fnident->param = paramident;
+      }
+   }
+   */
+
+}
 void preproc(astree root){
    switch(root->symbol){
       case BLOCK:
@@ -461,6 +570,7 @@ void preproc(astree root){
          structblock(root);
          break;
       case PROTOTYPE:
+         prototype(root);
       case FUNCTION:
          function(root);
          break;
@@ -543,4 +653,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.6 2014-06-10 23:18:03-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.7 2014-06-11 01:31:56-07 - - $")
