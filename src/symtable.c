@@ -344,11 +344,9 @@ void vardecl (astree root){
 hsnode attachparam(astree fn, astree paramlist, bool tmpscope){
 
    hashstack tmphash = tmpscope ? new_hashstack() : idents;
-
    hsnode fn1 = add(tmphash, fn);
 
    if(!tmpscope) enterblock();
-
    for( astree itor = paramlist->first; itor; itor = itor->next){
       astree param = basetype(itor);
       param->attributes |= ATTR_PARAM;
@@ -401,20 +399,21 @@ bool match(hsnode this, hsnode that){
       match = this->lexeme == that->lexeme &&
          this->attributes == that->attributes;
 
-//      printf ("%d:%d check %s: %s ", i++, match, 
-//            tostr(this), tostr(that));
-//      print_attributes(this->attributes);
-//      print_attributes(that->attributes);
-//      printf("\n");
-//      printf( "details %p %p %lu %lu\n",
-//            this->lexeme, that->lexeme,
-//            this->attributes, that->attributes );
+      printf ("%d:%d check %s: %s ", i++, match, 
+            tostr(this), tostr(that));
+      print_attributes(this->attributes);
+      print_attributes(that->attributes);
+      printf("\n");
+      printf( "details %p %p %lu %lu\n",
+            this->lexeme, that->lexeme,
+            this->attributes, that->attributes );
 
       if(!match) return false;
       this = this->param;
       that = that->param;
    }
 
+   (void)i;
    return match;
 }
 
@@ -425,25 +424,6 @@ bool match(hsnode this, hsnode that){
 //Requirement: Can't touch existed idents table and block counter
 bool matchfunction(const astree const fn, 
       const astree const paramlist, const hsnode const fn2){
-   
-   /*
-   hashstack tmphash = new_hashstack();
-   hsnode fn1 = add(tmphash, fn);
-
-   for( astree itor = paramlist->first; itor; itor = itor->next){
-      astree param = basetype(itor);
-      param->attributes |= ATTR_PARAM;
-      param->attributes |= ATTR_LVALUE;
-      hsnode paramdup = find_hashstack(tmphash, param->lexeme);
-      if(paramdup) prndup("param", paramdup, param);
-      else{
-         hsnode paramident = add(tmphash, param);
-         push_hashstack(tmphash, paramident);
-         paramident->param = fn1->param; //threading params
-         fn1->param = paramident;
-      }
-   }
-   */
 
    hsnode fn1 = attachparam(fn, paramlist, 1);
    bool ismatch = match(fn1,fn2);
@@ -458,9 +438,7 @@ bool matchfunction(const astree const fn,
 //
 
 
-
 void function(astree root){
-//   assert (idents->block == GLOBAL);
    astree type = root->first;
    astree paramlist = type->next;
    astree ident = basetype(type);
@@ -468,8 +446,8 @@ void function(astree root){
    ident->attributes |= (paramlist->next) ?
                         ATTR_FUNCTION : ATTR_PROTOTYPE;
 
-   DEBUGF('F', "function bid:%d %s %s\n",
-         topblock(), atostr(type), atostr(ident));
+   DEBUGF('F', "FUNC: %s %s\n", atostr(type), atostr(ident));
+
 
    //check whether there is an existed prototype of function
    //find(funcid)
@@ -493,100 +471,40 @@ void function(astree root){
    hsnode orig = find_hashstack(idents, ident->lexeme);
 
    if(orig){
-      if(orig->attributes & ATTR_FUNCTION){
-         prndup("function", orig, ident);
-         return;
-      }else{
-         //matching prototype signature.
-         //params are stored in reverse order
-         //orig a prototype.
-         STUBPRINTF("matching & checking prototype\n");
+      if(orig->attributes & ATTR_FUNCTION){     //function existed
+         eprintf("%s is already defined by function:%s\n",
+               atostr(ident), tostr(orig));
+      }else if( ident->attributes & ATTR_PROTOTYPE ){
+         if(matchfunction(ident,paramlist, orig)){
+            eprintf("proto:%s is already declared %s\n",
+               atostr(ident), tostr(orig));
+         }else{
+            eprintf("proto:%s is mismatched with a declared %s\n",
+               atostr(ident), tostr(orig));
+         }
+      }else{ //ident is function % orig is a prototype
+         ident->attributes &= ~(ATTR_FUNCTION);
+         ident->attributes |= ATTR_PROTOTYPE;
+         if(matchfunction(ident,paramlist, orig)){
+            //update prototype ptr -> actually function obj
+            orig->filenr = ident->filenr;
+            orig->linenr = ident->linenr;
+            orig->offset = ident->offset;
+            orig->attributes &= ~(ATTR_PROTOTYPE);
+            orig->attributes |= ATTR_FUNCTION;
+         }else{
+            eprintf("function:%s is mismatched with a prototype %s\n",
+               atostr(ident), tostr(orig));
+         }
+         ident->attributes &= ~(ATTR_PROTOTYPE);
+         ident->attributes |= ATTR_FUNCTION;
       }
+      return;
    }
-   
-   //orig is either not found or is a prototype
-
-   //ident has function name and belongs in a global scope. 
-   hsnode fnident = add(idents, ident);
-   // don't push on stack because it's global
-
-
-   //param and stuff lower is in a different scope
-   //building a paramlist
-   enterblock();
-   for( astree itor = paramlist->first; itor; itor = itor->next){
-      astree param = basetype(itor);
-      param->attributes |= ATTR_PARAM;
-      param->attributes |= ATTR_LVALUE;
-      hsnode paramdup = find_hashstack(idents, param->lexeme);
-      if(paramdup) prndup("param", paramdup, param);
-      else{
-         hsnode paramident = add(idents, param);
-         push_hashstack(idents, paramident);
-         paramident->param = fnident->param; //threading params
-         fnident->param = paramident;
-      }
-   }
+   hsnode fn = attachparam(ident, paramlist, false);
+   ident->sym = fn;
 }
 
-void functionexit(void){
-   DEBUGF('F', "exiting a function\n");
-}
-
-
-void prototype(astree root){
-   astree type = root->first;
-   astree paramlist = type->next;
-   astree ident = basetype(type);
-   ident->block = GLOBAL;
-   ident->attributes |= ATTR_PROTOTYPE;
-
-   DEBUGF('F', "PROTO: %s %s\n", atostr(type), atostr(ident));
-
-   hsnode orig = find_hashstack(idents, ident->lexeme);
-
-   char matchcheck = 0;
-   if(orig){
-      if(orig->attributes & ATTR_FUNCTION){
-         prndup("function", orig, ident);
-         return;
-      }else{
-         matchcheck = 1;
-         //matching prototype signature.
-         //params are stored in reverse order
-         //orig a prototype.
-         STUBPRINTF("matching & checking prototype\n");
-      }
-   }
-
-//printf("PROTO: orig vs orig %d\n", (int) match(orig,orig));
-   if(matchcheck){
-      printf("PROTO: new vs orig %d\n",
-            (int) matchfunction(ident,paramlist, orig));
-   }
-
-
-   /*
-   hashstack tmphash = new_hashstack();
-   hsnode fnident = add(tmphash, ident); //prevent collision
-   //building a paramlist
-   //
-   for( astree itor = paramlist->first; itor; itor = itor->next){
-      astree param = basetype(itor);
-      param->attributes |= ATTR_PARAM;
-      param->attributes |= ATTR_LVALUE;
-      hsnode paramdup = find_hashstack(tmphash, param->lexeme);
-      if(paramdup) prndup("param", paramdup, param);
-      else{
-         hsnode paramident = add(tmphash, param);
-         push_hashstack(tmphash, paramident);
-         paramident->param = fnident->param; //threading params
-         fnident->param = paramident;
-      }
-   }
-   */
-
-}
 void preproc(astree root){
    switch(root->symbol){
       case BLOCK:
@@ -599,7 +517,6 @@ void preproc(astree root){
          structblock(root);
          break;
       case PROTOTYPE:
-         prototype(root);
       case FUNCTION:
          function(root);
          break;
@@ -609,25 +526,11 @@ void preproc(astree root){
 void postproc(astree root){
    switch(root->symbol){
       case BLOCK:
-         exitblock();
-         break;
       case PROTOTYPE:
       case FUNCTION:
-         functionexit();
+         exitblock();
          break;
 
-//      case PROTOTYPE:
-//         DEBUGF('P',"POST on PROTOTYPE:[%s] \n", root->lexeme);
-//         break;
-//      case PARAM:
-//         DEBUGF('P',"POST on PARAM:[%s] \n", root->lexeme);
-//         break;
-//      case BLOCK:
-//         DEBUGF('P',"POST on BLOCK:[%s] \n", root->lexeme);
-//         break;
-//      case FUNCTION:
-//         DEBUGF('P',"POST on FUNCTION:[%s] \n", root->lexeme);
-//         break;
    }
 }
 
@@ -682,4 +585,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.8 2014-06-11 01:55:03-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.11 2014-06-11 03:03:44-07 - - $")
