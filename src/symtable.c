@@ -386,6 +386,23 @@ void function(astree root){
          topblock(), type->lexeme, ident->lexeme);
 
    //check whether there is an existed prototype of function
+   //find(funcid)
+   //    notfound:
+   //       [just enter a new function into identifier table]
+   //
+   //    found:
+   //       match(existed funcid with the new function)
+   //          match:
+   //             is existed funcid is a function?
+   //                yes:
+   //                   [print error: function redeclaration]
+   //                no:
+   //                   [update the funcid record]
+   //
+   //          notmatch:
+   //             [print error: mismatch signature]
+   //
+
    hsnode orig = find_hashstack(idents, ident->lexeme);
 
    if(orig){
@@ -523,4 +540,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.4 2014-06-10 20:02:04-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.5 2014-06-10 20:24:22-07 - - $")
