@@ -144,13 +144,13 @@ bool is_reference (bitset_t attributes) {
 char *tostr(hsnode it){
    snprintf(strbuff, BZ, "%s(%d.%d.%d)",
          it->lexeme, it->filenr, it->linenr, it->offset);
-   return strbuff;
+   return (strdup(strbuff)); //leaky
 }
 
 char *atostr(astree it){
    snprintf(strbuff, BZ, "%s(%d.%d.%d)",
          it->lexeme, it->filenr, it->linenr, it->offset);
-   return strbuff;
+   return (strdup(strbuff)); //leaky
 }
 
 //
@@ -158,7 +158,7 @@ char *atostr(astree it){
 //
 void prndup(char *tag, hsnode ori, astree dup){
    eprintf("dup:%s %s is already defined at %s.\n",
-         tag, dup->lexeme, atostr(dup), tostr(ori));
+         tag, atostr(dup), tostr(ori));
 }
 
 //
@@ -375,15 +375,16 @@ bool matchfunction(hsnode this, hsnode that){
 
 
 void function(astree root){
-   assert (idents->block == GLOBAL);
+//   assert (idents->block == GLOBAL);
    astree type = root->first;
    astree paramlist = type->next;
    astree ident = basetype(type);
+   ident->block = GLOBAL;
    ident->attributes |= (paramlist->next) ?
                         ATTR_FUNCTION : ATTR_PROTOTYPE;
 
-   DEBUGF('f', "function bid:%d %s %s\n",
-         topblock(), type->lexeme, ident->lexeme);
+   DEBUGF('F', "function bid:%d %s %s\n",
+         topblock(), atostr(type), atostr(ident));
 
    //check whether there is an existed prototype of function
    //find(funcid)
@@ -403,6 +404,7 @@ void function(astree root){
    //             [print error: mismatch signature]
    //
 
+
    hsnode orig = find_hashstack(idents, ident->lexeme);
 
    if(orig){
@@ -421,6 +423,8 @@ void function(astree root){
 
    //ident has function name and belongs in a global scope. 
    hsnode fnident = add(idents, ident);
+   // don't push on stack because it's global
+
 
    //param and stuff lower is in a different scope
    //building a paramlist
@@ -438,11 +442,10 @@ void function(astree root){
          fnident->param = paramident;
       }
    }
-
 }
 
 void functionexit(void){
-   DEBUGF('f', "exiting a function");
+   DEBUGF('F', "exiting a function\n");
 }
 
 
@@ -540,4 +543,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.5 2014-06-10 20:24:22-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.6 2014-06-10 23:18:03-07 - - $")
