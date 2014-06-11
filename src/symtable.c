@@ -377,12 +377,12 @@ bool matchfunction(hsnode this, hsnode that){
 void function(astree root){
    assert (idents->block == GLOBAL);
    astree type = root->first;
-   astree param = type->next;
+   astree paramlist = type->next;
    astree ident = basetype(type);
-   ident->attributes |= (param->next) ?
+   ident->attributes |= (paramlist->next) ?
                         ATTR_FUNCTION : ATTR_PROTOTYPE;
 
-   DEBUGF('v', "function bid:%d %s %s\n",
+   DEBUGF('f', "function bid:%d %s %s\n",
          topblock(), type->lexeme, ident->lexeme);
 
    //check whether there is an existed prototype of function
@@ -396,7 +396,7 @@ void function(astree root){
          //matching prototype signature.
          //params are stored in reverse order
          //orig a prototype.
-         STUBPRINF("matching & checking prototype");
+         STUBPRINTF("matching & checking prototype");
       }
    }
    
@@ -408,8 +408,7 @@ void function(astree root){
    //param and stuff lower is in a different scope
    //building a paramlist
    enterblock();
-   astree itor = param->first;     //need to create a
-   for( ;itor; itor = itor->next){     //test case w/o param
+   for( astree itor = paramlist->first; itor; itor = itor->next){
       astree param = basetype(itor);
       param->attributes |= ATTR_PARAM;
       param->attributes |= ATTR_LVALUE;
@@ -418,27 +417,17 @@ void function(astree root){
       else{
          hsnode paramident = add(idents, param);
          push_hashstack(idents, paramident);
-         paramident->param = paramlist->param; //threading params
-         paramlist->param = paramident;
+         paramident->param = fnident->param; //threading params
+         fnident->param = paramident;
       }
    }
 
-
-   //exitblock(); should be called on exit 
-   //to destroy the params
-
-
-
-
-
-   hashtable temp =new_hashtable();
-   hsnode newfun = add(temp, ident);
-
-   enterblock();
-   //processing param
-   exitblock();
-
 }
+
+void functionexit(void){
+   DEBUGF('f', "exiting a function");
+}
+
 
 void preproc(astree root){
    switch(root->symbol){
@@ -463,6 +452,11 @@ void postproc(astree root){
       case BLOCK:
          exitblock();
          break;
+      case PROTOTYPE:
+      case FUNCTION:
+         functionexit();
+         break;
+
 //      case PROTOTYPE:
 //         DEBUGF('P',"POST on PROTOTYPE:[%s] \n", root->lexeme);
 //         break;
@@ -529,4 +523,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.3 2014-06-10 19:46:08-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.4 2014-06-10 20:02:04-07 - - $")

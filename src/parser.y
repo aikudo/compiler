@@ -1,5 +1,5 @@
 %{
-// $Id: parser.y,v 1.2 2014-06-10 19:46:08-07 - - $
+// $Id: parser.y,v 1.3 2014-06-10 20:02:04-07 - - $
 
 /*
 Metagrammar definitions
@@ -48,7 +48,9 @@ constant    :->   INTCON | CHARCON | STRINGCON | false | true | null
 
 
 #include <assert.h>
-#include <stdlib.h> #include <string.h> #include <stdio.h> 
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h> 
 #include "lyutils.h"
 #include "astree.h"
 #include "astree.rep.h"

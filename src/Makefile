@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2014-06-10 00:44:31-07 - - $
+# $Id: Makefile,v 1.2 2014-06-10 20:02:04-07 - - $
 
 MKFILE    = Makefile
 DEPSFILE  = ${MKFILE}.deps
@@ -76,6 +76,8 @@ ci : ${ALLSRC} ${TESTINS}
 	cid + ${ALLSRC} ${TESTINS} 
 	git add ${ALLSRC} ${TESTINS} ocfiles -A
 
+git : ci
+	git commit -m "auto commited `date`"
 #
 # Make a listing from all of the sources
 #
