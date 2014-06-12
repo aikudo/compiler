@@ -1,0 +1,2 @@
+ 2249  grep -h -w '[A-Z].*' *.ast | sed 's/^[ \t]*//' | awk '{print $1}' |sort |uniq >tokens.list
+ 2252  history |grep 2249 >shellcommand

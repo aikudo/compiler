@@ -182,9 +182,9 @@ void prnerr( hsnode it, char *errmsg){
 //  Building a symbol table
 //  Top-down a.k.a. pre-fix processing
 
-void enterblock(){ 
+void enterblock(astree root){ 
    pushblock();
-   DEBUGF('b', "enter block%d\n", idents->block);
+   DEBUGF('b', "%s enterblock: %d\n", atostr(root), topblock());
 }
 
 //
@@ -195,8 +195,7 @@ void enterblock(){
 
 void exitblock(astree root){
    popblock();
-   DEBUGF('b', "exit. block is now%d on %s\n",
-         idents->block, atostr(root));
+   DEBUGF('b', "%s exitblock: %d\n", atostr(root), topblock());
    hsnode node = peak_hashstack(idents);
    //pop all node bigger than current idents->block.
    //except for global nodes with block:0 which will 
@@ -359,7 +358,7 @@ hsnode attachparam(astree fn, astree paramlist, bool tmpscope){
    hashstack tmphash = tmpscope ? new_hashstack() : idents;
    hsnode fn1 = add(tmphash, fn);
 
-   if(!tmpscope) enterblock();
+   if(!tmpscope) enterblock(fn);
    for( astree itor = paramlist->first; itor; itor = itor->next){
       astree param = basetype(itor);
       param->attributes |= ATTR_PARAM | ATTR_LVALUE | ATTR_VARIABLE;
@@ -475,8 +474,17 @@ bool matchfunction(const astree const fn,
 // While param and body block is in the same name space.
 //
 
+astree currentfunction = NULL; //function return type
+
+void exitfunction(astree root){
+   DEBUGF('F', "exit: %s\n", atostr(root->first->first));
+   currentfunction = NULL;
+   exitblock(root);
+}
 
 void function(astree root){
+   DEBUGF('F', "enter: %s\n", atostr(root->first->first));
+   currentfunction = root;
    astree type = root->first;
    astree paramlist = type->next;
    astree ident = basetype(type);
@@ -537,7 +545,7 @@ void function(astree root){
          ident->attributes &= ~(ATTR_PROTOTYPE);
          ident->attributes |= ATTR_FUNCTION;
       }
-      enterblock();
+      enterblock(ident);
       return;
    }
    hsnode fn = attachparam(ident, paramlist, false);
@@ -545,14 +553,23 @@ void function(astree root){
 }
 
 
-
-      case INTCON    : root->attributes=ATTR_CONST|ATTR_INT; break;
-      case CHARCON   : root->attributes=ATTR_CONST|ATTR_CHAR; break;
-      case STRINGCON : root->attributes=ATTR_CONST|ATTR_STRING; break;
-      case NIL       : root->attributes=ATTR_CONST|ATTR_NULL; break;
+void setconst(astree root){
+   bitset_t attributes;
+   switch(root->symbol){
+      case INTCON    : attributes = ATTR_INT; break;
+      case CHARCON   : attributes = ATTR_CHAR; break;
+      case STRINGCON : attributes = ATTR_STRING; break;
+      case NIL       : attributes = ATTR_NULL; break;
       case TRUE      :
-      case FALSE     : root->attributes=ATTR_CONST|ATTR_BOOL; break;
+      case FALSE     : attributes = ATTR_BOOL; break;
    }
+   root->attributes = attributes | ATTR_CONST;
+}
+
+void checkconst(astree root){
+   //Literals are set by above so just propagate attributes 
+   //from constant literals to parent. No need to check.
+   root->attributes = root->first->attributes;
 }
 
 
@@ -564,11 +581,18 @@ void function(astree root){
 
 //can check only one attribute at a time!
 bool hasattrib( astree node, bitset_t attribute ){
-   if(node->attributes & attribute)
-      return true;
+   if(node->attributes & attribute) return true;
    else{
-      eprintf( "%s doesn't have attribute: %s\n",
+      eprintf( "%s doesn't have attribute: %s.\n",
             atostr(node), print_attributes(attribute));
+      return false;
+   }
+}
+
+bool hasboolean(astree node){
+   if(node->attributes & ATTR_BOOL) return true;
+   else{
+      eprintf("A bad boolean expression %s.\n", atostr(node));
       return false;
    }
 }
@@ -577,7 +601,7 @@ bool hasprimitive(astree node){
    if(is_primitive(node->attributes))
       return true;
    else{
-      eprintf("%s is not a primitive type", atostr(node));
+      eprintf("%s is not a primitive type.\n", atostr(node));
       return false;
    }
 }
@@ -586,8 +610,38 @@ bool hasany(astree node){
    if(is_primitive(node->attributes) || is_reference(node->attributes))
       return true;
    else{
-      eprintf("%s is not a primitive nor a reference type",
+      eprintf("%s is not a primitive nor a reference type.\n",
             atostr(node));
+      return false;
+   }
+}
+
+//this needs to further examine all classes because
+//returning type of the 'same' struct should be okay
+//
+bool iscompatible(astree left, astree right){
+   bitset_t la = left->attributes;
+   bitset_t ra = right->attributes;
+   bool primitivematch =
+      (is_primitive(la) && is_primitive(ra)) && 
+      (  
+         (la & ATTR_BOOL)   ==  (ra & ATTR_BOOL)   ||
+         (la & ATTR_CHAR)   ==  (ra & ATTR_CHAR)   ||
+         (la & ATTR_INT)    ==  (ra & ATTR_INT)
+      );
+   bool referencecompatible =
+      ((la & ATTR_NULL)  &&  is_reference(ra)) ||
+      (is_reference(la)  &&  (ra & ATTR_NULL)) ;
+
+   //Note string to string, or struct to struct types are 
+   //not compatible. Pointer is only compatible with null.
+
+   bool compatible = primitivematch || referencecompatible;
+   if(compatible) return true;
+   else{
+      eprintf("%s [%s] is not compatible with %s [%s].\n",
+            atostr(left), print_attributes(la),
+            atostr(right), print_attributes(ra));
       return false;
    }
 }
@@ -599,6 +653,39 @@ void checkequality(astree root){
    hasany(right);
    root->attributes = ATTR_BOOL | ATTR_VREG; 
 }
+
+
+void checkvardecl(astree root){
+   astree left = root->first;
+   astree right = left->next;
+   iscompatible(left, right);
+
+}
+
+void checkwhileif(astree root){
+   astree expr = root->first;
+   hasboolean(expr);
+}
+
+
+//check on return type vs function declaration of return type
+//matched struct should be okay.
+void checkreturn(astree root){
+   astree expr = root->first;
+   assert(currentfunction != NULL);
+   iscompatible(expr, currentfunction); //TODO
+   //need to check same type of everthing
+   STUBPRINTF("check returning type\n");
+}
+
+void checkassignment(astree root){
+}
+void checkselect(astree root){
+}
+void checkindexselect(astree root){
+}
+
+
 
 void checkcompare(astree root){
    astree left = root->first;
@@ -643,33 +730,33 @@ void checkunary(astree root){
 
 void preproc(astree root){
    switch(root->symbol){
-      case BLOCK     : enterblock(); break;
       case VARDECL   : vardecl(root); break;
       case STRUCT    : structblock(root); break;
+      case BLOCK     : enterblock(root); break;
+
       case PROTOTYPE : 
       case FUNCTION  : function(root); break;
-                       //need to set on the child
 
       case INTCON    :
       case CHARCON   :
       case STRINGCON :
       case NIL       :
       case TRUE      :
-      case FALSE     : setconst(root);
+      case FALSE     : setconst(root); break;
    }
 }
 
 void postproc(astree root){
    switch(root->symbol){
-      case BLOCK     : 
+      case BLOCK     : exitblock(root); break;
       case PROTOTYPE : 
-      case FUNCTION  : exitblock(root); break;
+      case FUNCTION  : exitfunction(root); break;
 
       case VARDECL   : checkvardecl(root); break;
 
-      case WHILE     : checkwhile(root); break;
-
-      case IF        : checkif(root); break;
+      case WHILE     : 
+      case IFELSE    : 
+      case IF        : checkwhileif(root); break;
 
       case IFELSE    : checkifelse(root); break;
          
@@ -703,12 +790,12 @@ void postproc(astree root){
       case NEW       : //allocator break;
       case IDENT     : break;
 
-      case INTCON    : break;
-      case CHARCON   : break;
-      case STRINGCON : break;
-      case FALSE     : break;
-      case TRUE      : break;
-      case NIL       : break;
+      case INTCON    : 
+      case CHARCON   : 
+      case STRINGCON : 
+      case NIL       : 
+      case FALSE     : 
+      case TRUE      : checkconst(root); break;
    }
 }
 
@@ -782,4 +869,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.14 2014-06-11 23:33:21-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.15 2014-06-12 02:55:15-07 - - $")
