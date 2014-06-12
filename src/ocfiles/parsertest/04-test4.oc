@@ -1,0 +1,9 @@
+// $Id
+
+#include "oclib.oh"
+
+struct foo {
+   int a;
+   bool b;
+}
+

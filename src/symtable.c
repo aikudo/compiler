@@ -231,14 +231,15 @@ astree basetype(astree root){
    }
 
    switch(type->symbol){
-      case VOID:     attributes |= ATTR_VOID; break;
-      case BOOL:     attributes |= ATTR_BOOL; break;
-      case CHAR:     attributes |= ATTR_CHAR; break;
-      case INT:      attributes |= ATTR_INT; break;
-      case STRING:   attributes |= ATTR_STRING; break;
-      case TYPEID:   checktype(type, ident);
-                     ident->structid = type;
-                     attributes |= ATTR_STRUCT; break;
+      //case NIL    : // null type is not supported except for return
+      case VOID   : attributes |= ATTR_VOID; break;
+      case BOOL   : attributes |= ATTR_BOOL; break;
+      case CHAR   : attributes |= ATTR_CHAR; break;
+      case INT    : attributes |= ATTR_INT; break;
+      case STRING : attributes |= ATTR_STRING; break;
+      case TYPEID : checktype(type, ident);
+                    ident->structid = type;
+                    attributes |= ATTR_STRUCT; break;
       default:
                      STUBPRINTF("ERROR: Uncaught symbol%s\n",
                         get_yytname(type->symbol));
@@ -261,12 +262,12 @@ astree basetype(astree root){
 
 
 void setattr(hsnode node, const astree const item){
-   node->filenr = item->filenr;
-   node->linenr = item->linenr;
-   node->offset = item->offset;
-   node->block  = item->block;
+   node->filenr     = item->filenr;
+   node->linenr     = item->linenr;
+   node->offset     = item->offset;
+   node->block      = item->block;
    node->attributes = item->attributes;
-   item->sym = node;
+   item->sym        = node;
 }
 
 //An add wrapper for add_hashstack()
@@ -552,23 +553,32 @@ void func_exit( astree root){
 }
 
 
+void setconst(astree root){
+   switch(root->symbol){
+      case INTCON    : root->attributes = ATTR_INT; break;
+      case CHARCON   : root->attributes = ATTR_CHAR; break;
+      case STRINGCON : root->attributes = ATTR_STRING; break;
+      case NIL       : root->attributes = ATTR_NULL; break;
+      case TRUE      :
+      case FALSE     : root->attributes = ATTR_BOOL; break;
+   }
+   root->attributes |= ATTR_CONST;
+}
+
 void preproc(astree root){
    switch(root->symbol){
-      case BLOCK:
-         enterblock();
-         break;
-      case VARDECL:
-         vardecl(root);
-         break;
-      case STRUCT:
-         structblock(root);
-         break;
-      case PROTOTYPE:
-         proto(root);
-         break;
-      case FUNCTION:
-         func(root);
-         break;
+      case BLOCK     : enterblock(); break;
+      case VARDECL   : vardecl(root); break;
+      case STRUCT    : structblock(root); break;
+      case PROTOTYPE : proto(root); break;
+      case FUNCTION  : func(root); break;
+      case INTCON    : 
+      case CHARCON   : 
+      case STRINGCON : 
+      case NIL       : 
+      case TRUE      : 
+      case FALSE     : setconst(root); break;
+
    }
 }
 
@@ -584,7 +594,12 @@ void postproc(astree root){
       case FUNCTION:
          func_exit(root);
          break;
-
+      case '.':
+         //structselect(root);
+         break;
+      case '[':
+         //indexselect(root);
+         break;
    }
 }
 
@@ -657,4 +672,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.12 2014-06-11 15:38:49-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.13 2014-06-11 17:42:45-07 - - $")

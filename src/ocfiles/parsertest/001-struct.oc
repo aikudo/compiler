@@ -1,0 +1,17 @@
+
+struct foo {
+   int one;
+   int two;
+   int three;
+   bool four;
+   bool five;
+}
+
+struct bar {
+   int one;
+   sometype two;
+}
+
+struct baz {
+}
+
