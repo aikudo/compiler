@@ -1,3 +1,20 @@
+/*
+ * There are two parts to this phase.
+ * First build a simple table that stores identifiers
+ * and their properties. This is done by top-down
+ * traversing an abstract syntax tree.
+ * Second, `strong' type-checking all the
+ * expressions. This is done by a bottom-up
+ * traversal. These two can be combined in one
+ * traversal as in:
+ *    traverse(root){
+ *       preproc(root);
+ *       traverse(root->child);
+ *       postproc(root);
+ *    }
+ *
+ *
+ * */
 
 #include "astree.h"
 #include "astree.rep.h"
@@ -679,10 +696,13 @@ void checkreturn(astree root){
 }
 
 void checkassignment(astree root){
+   STUBPRINTF("check returning type%s\n", atostr(root));
 }
 void checkselect(astree root){
+   STUBPRINTF("check returning type%s\n", atostr(root));
 }
 void checkindexselect(astree root){
+   STUBPRINTF("check returning type%s\n", atostr(root));
 }
 
 
@@ -746,6 +766,61 @@ void preproc(astree root){
    }
 }
 
+//   sed 's/^[ \t]*//' *.ast | awk '{print $1}' |sort |uniq >symbols.txt 
+//
+//  '='
+//  '-'
+//  ';'
+//  '!'
+//  '.'
+//  ')'
+//  ']'
+//  '}'
+//  '*'
+//  '+'
+//  ARR
+//  BLOCK
+//  BOOL
+//  CALL
+//  CHAR
+//  CHARCON
+//  DECLID
+//  EQ
+//  FALSE
+//  FIELD
+//  FUNCTION
+//  GT
+//  IDENT
+//  IF
+//  IFELSE
+//  INDEX
+//  INT
+//  INTCON
+//  LE
+//  LT
+//  NE
+//  NEG
+//  NEW
+//  NEWARRAY
+//  NIL
+//  ORD
+//  PARAM
+//  PROTOTYPE
+//  RETURN
+//  RETURNVOID
+//  ROOT
+//  STRING
+//  STRINGCON
+//  STRUCT
+//  TRUE
+//  TYPEID
+//  VARDECL
+//  VOID
+//  WHILE
+//  
+//  should catch all of those symbols in the post processing
+//  There is also a NEWSTRING that is not used in all test cases
+
 void postproc(astree root){
    switch(root->symbol){
       case BLOCK     : exitblock(root); break;
@@ -758,8 +833,6 @@ void postproc(astree root){
       case IFELSE    : 
       case IF        : checkwhileif(root); break;
 
-      case IFELSE    : checkifelse(root); break;
-         
       case RETURN    : checkreturn(root); break;
 
       case '='       : checkassignment(root); break;
@@ -784,11 +857,18 @@ void postproc(astree root){
       case ORD       : 
       case CHR       : checkunary(root); break;
 
-      case '.'       : checkselect(root); break;
-      case '['       : checkindexselect(root); break;
 
-      case NEW       : //allocator break;
-      case IDENT     : break;
+      //4.4.4
+      case NEW       : //new struct type
+      case NEWARRAY  : //new standard void, bool, char, int, string
+      case NEWSTRING : //a special case for new string
+
+      case CALL      : //function call
+      case IDENT     : //checkident(root); break;
+
+      case INDEX     : checkindexselect(root); break;
+
+      case '.'       : checkselect(root); break;
 
       case INTCON    : 
       case CHARCON   : 
@@ -869,4 +949,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.15 2014-06-12 02:55:15-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.16 2014-06-12 03:53:34-07 - - $")
