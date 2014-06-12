@@ -16,6 +16,17 @@
  *
  * */
 
+
+// TODO:
+// should change the TRUE -> TRU
+// and FALSE -> FAL
+// ad NULL -> NIL
+//
+// to prevent some random
+// redefine somewhere
+//
+//
+//
 #include "astree.h"
 #include "astree.rep.h"
 #include "auxlib.h"
@@ -949,4 +960,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.16 2014-06-12 03:53:34-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.17 2014-06-12 04:05:19-07 - - $")
