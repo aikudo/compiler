@@ -131,6 +131,14 @@ char * print_attributes (bitset_t attributes) {
    return(strdup(strbuff));
 }
 
+//
+//categories of types
+// void: neither primitive nor reference. Can be used only as a 
+// return type for a function. It's an error otherwise
+// primitive: bool, char and int. Can't be an array.
+// reference: null, string, struct typename, basetype[] array.
+//
+
 bool is_primitive (bitset_t attributes) {
    return attributes
           & (ATTR_BOOL | ATTR_CHAR | ATTR_INT)
@@ -139,8 +147,7 @@ bool is_primitive (bitset_t attributes) {
 
 bool is_reference (bitset_t attributes) {
    return attributes
-          & (ATTR_NULL | ATTR_STRING | ATTR_STRUCT | ATTR_ARRAY)
-       && TRUE;
+          & (ATTR_NULL | ATTR_STRING | ATTR_STRUCT | ATTR_ARRAY);
 }
 
 char *tostr(hsnode it){
@@ -167,9 +174,13 @@ void prndup(char *tag, hsnode ori, astree dup){
 //Error complain: err(message, item)
 //
 
-void prnerr(char *errmsg, hsnode it){
+void prnerr( hsnode it, char *errmsg){
    eprintf("%s: %s\n", tostr(it), errmsg);
 }
+
+/*----------------------------------------------------------------*/
+//  Building a symbol table
+//  Top-down a.k.a. pre-fix processing
 
 void enterblock(){ 
    pushblock();
@@ -184,7 +195,8 @@ void enterblock(){
 
 void exitblock(astree root){
    popblock();
-   DEBUGF('b', "exit. block is now%d on %s\n", idents->block, atostr(root));
+   DEBUGF('b', "exit. block is now%d on %s\n",
+         idents->block, atostr(root));
    hsnode node = peak_hashstack(idents);
    //pop all node bigger than current idents->block.
    //except for global nodes with block:0 which will 
@@ -532,74 +544,171 @@ void function(astree root){
    ident->sym = fn;
 }
 
-void proto( astree root){
-   DEBUGF('F',"enter proto %s\n", atostr(root));
-   function(root);
-}
-
-void proto_exit( astree root){
-   DEBUGF('F',"exit proto %s\n", atostr(root));
-   exitblock(root);//this doesn't work
-}
-
-void func( astree root){
-   DEBUGF('F',"enter func %s\n", atostr(root));
-   function(root);
-}
-
-void func_exit( astree root){
-   DEBUGF('F',"exit func %s\n", atostr(root));
-   exitblock(root);
-}
 
 
-void setconst(astree root){
-   switch(root->symbol){
-      case INTCON    : root->attributes = ATTR_INT; break;
-      case CHARCON   : root->attributes = ATTR_CHAR; break;
-      case STRINGCON : root->attributes = ATTR_STRING; break;
-      case NIL       : root->attributes = ATTR_NULL; break;
+      case INTCON    : root->attributes=ATTR_CONST|ATTR_INT; break;
+      case CHARCON   : root->attributes=ATTR_CONST|ATTR_CHAR; break;
+      case STRINGCON : root->attributes=ATTR_CONST|ATTR_STRING; break;
+      case NIL       : root->attributes=ATTR_CONST|ATTR_NULL; break;
       case TRUE      :
-      case FALSE     : root->attributes = ATTR_BOOL; break;
+      case FALSE     : root->attributes=ATTR_CONST|ATTR_BOOL; break;
    }
-   root->attributes |= ATTR_CONST;
 }
+
+
+/*----------------------------------------------------------------*/
+//
+//Type checking
+// Bottom-up, a.k.a. post-fix processing
+//
+
+//can check only one attribute at a time!
+bool hasattrib( astree node, bitset_t attribute ){
+   if(node->attributes & attribute)
+      return true;
+   else{
+      eprintf( "%s doesn't have attribute: %s\n",
+            atostr(node), print_attributes(attribute));
+      return false;
+   }
+}
+
+bool hasprimitive(astree node){
+   if(is_primitive(node->attributes))
+      return true;
+   else{
+      eprintf("%s is not a primitive type", atostr(node));
+      return false;
+   }
+}
+
+bool hasany(astree node){
+   if(is_primitive(node->attributes) || is_reference(node->attributes))
+      return true;
+   else{
+      eprintf("%s is not a primitive nor a reference type",
+            atostr(node));
+      return false;
+   }
+}
+
+void checkequality(astree root){
+   astree left = root->first;
+   astree right = left->next;
+   hasany(left);
+   hasany(right);
+   root->attributes = ATTR_BOOL | ATTR_VREG; 
+}
+
+void checkcompare(astree root){
+   astree left = root->first;
+   astree right = left->next;
+   hasprimitive(left);
+   hasprimitive(right);
+   root->attributes = ATTR_BOOL | ATTR_VREG; 
+}
+
+void checkbinary(astree root){
+   astree left = root->first;
+   astree right = left->next;
+   hasattrib(left, ATTR_INT);
+   hasattrib(right, ATTR_INT);
+   root->attributes = ATTR_INT | ATTR_VREG; 
+}
+
+void checkunary(astree root){
+   astree child = root->first;
+   switch(root->symbol){
+      case NEG:
+      case POS:
+         hasattrib(child, ATTR_INT);
+         root->attributes = ATTR_INT | ATTR_VREG; 
+         break;
+      case '!':
+         hasattrib(child, ATTR_BOOL);
+         root->attributes = ATTR_BOOL | ATTR_VREG; 
+         break;
+      case ORD:
+         hasattrib(child, ATTR_CHAR);
+         root->attributes = ATTR_INT | ATTR_VREG; 
+         break;
+      case CHR:
+         hasattrib(child, ATTR_INT);
+         root->attributes = ATTR_CHAR | ATTR_VREG; 
+         break;
+   }
+}
+
+
 
 void preproc(astree root){
    switch(root->symbol){
       case BLOCK     : enterblock(); break;
       case VARDECL   : vardecl(root); break;
       case STRUCT    : structblock(root); break;
-      case PROTOTYPE : proto(root); break;
-      case FUNCTION  : func(root); break;
-      case INTCON    : 
-      case CHARCON   : 
-      case STRINGCON : 
-      case NIL       : 
-      case TRUE      : 
-      case FALSE     : setconst(root); break;
+      case PROTOTYPE : 
+      case FUNCTION  : function(root); break;
+                       //need to set on the child
 
+      case INTCON    :
+      case CHARCON   :
+      case STRINGCON :
+      case NIL       :
+      case TRUE      :
+      case FALSE     : setconst(root);
    }
 }
 
 void postproc(astree root){
    switch(root->symbol){
-      case BLOCK:
-         exitblock(root);
-         break;
+      case BLOCK     : 
+      case PROTOTYPE : 
+      case FUNCTION  : exitblock(root); break;
 
-      case PROTOTYPE:
-         proto_exit(root);
-         break;
-      case FUNCTION:
-         func_exit(root);
-         break;
-      case '.':
-         //structselect(root);
-         break;
-      case '[':
-         //indexselect(root);
-         break;
+      case VARDECL   : checkvardecl(root); break;
+
+      case WHILE     : checkwhile(root); break;
+
+      case IF        : checkif(root); break;
+
+      case IFELSE    : checkifelse(root); break;
+         
+      case RETURN    : checkreturn(root); break;
+
+      case '='       : checkassignment(root); break;
+
+      case EQ        : 
+      case NE        : checkequality(root); break;
+
+      case LT        : 
+      case LE        : 
+      case GT        : 
+      case GE        : checkcompare(root); break;
+
+      case '+'       : 
+      case '-'       : 
+      case '*'       : 
+      case '/'       : 
+      case '%'       : checkbinary(root); break;
+
+      case NEG       : 
+      case POS       : 
+      case '!'       : 
+      case ORD       : 
+      case CHR       : checkunary(root); break;
+
+      case '.'       : checkselect(root); break;
+      case '['       : checkindexselect(root); break;
+
+      case NEW       : //allocator break;
+      case IDENT     : break;
+
+      case INTCON    : break;
+      case CHARCON   : break;
+      case STRINGCON : break;
+      case FALSE     : break;
+      case TRUE      : break;
+      case NIL       : break;
    }
 }
 
@@ -645,13 +754,14 @@ void printsym(astree node, int height){
       //   printf(" {%s}", node->structid->lexeme);
       //}
       //if(node->sym) printf(" [%s %s]",
-      //      tostr(node->sym), print_attributes(node->sym->attributes));
+      //    tostr(node->sym), print_attributes(node->sym->attributes));
       //printf("\n");
 
    }
    //printf("\n");
    for (astree child = node->first; child; child = child->next){
-      if(child->symbol == STRUCT) indentoffset--; //fixing struct indentation
+      //fixing struct indentation
+      if(child->symbol == STRUCT) indentoffset--;
       printsym(child, height + 1);
       if(child->symbol == STRUCT) indentoffset++;
       //postproc(child);
@@ -672,4 +782,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.13 2014-06-11 17:42:45-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.14 2014-06-11 23:33:21-07 - - $")
