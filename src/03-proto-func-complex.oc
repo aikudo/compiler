@@ -1,0 +1,24 @@
+void  protofun (int a, int b);
+
+void function1 (int a, int b){
+   int k = a + b;
+   return k;
+}
+void  protofun (int a, int b){  //okay
+   int k = a + b;
+   return k;
+}
+
+void function1 (int a, int b); //bad
+
+
+void []function2 (int a, int b){ //weird syntax but okay
+   int k = a + b;
+   return k;
+}
+
+
+void function3 (int a, int b){
+   int a = a + b;                //bad: clash with param
+   return k;
+}
