@@ -10,28 +10,28 @@ typedef struct hsnode *hsnode;
 typedef struct hashstack *hashstack;
 
 struct hashstack{
-   size_t size;                  //number of slots
-   size_t load;                  //number of elements
-   hsnode *chains;               //array of chain
-   hsnode stack;                 //itemifier stackA
-   hsnode gblhead;               //ptr to global block head stack
-   int block;                    //global current scope
+   size_t size;              //number of slots
+   size_t load;              //number of elements
+   hsnode *chains;           //array of chain
+   hsnode stack;             //itemifier stackA
+   hsnode gblhead;           //ptr to global block head stack
+   int block;                //global current scope
 };
 
 struct hsnode{
-   const char* lexeme;           // its adddress is hashed to table
+   const char* lexeme;       // its adddress is hashed to table
 
-   int filenr;                   // index into filename stack
-   int linenr;                   // line number from source code
-   int offset;                   // offset of token with current line
-   int block;                    // indicate block/scope level
+   int filenr;               // index into filename stack
+   int linenr;               // line number from source code
+   int offset;               // offset of token with current line
+   int block;                // indicate block/scope level
 
-   unsigned long attributes;     // do i need this? dupped in AST
-   hashstack fields;             // if this is struct, it has fields
-   hsnode structid;              // points to the type it used
-   hsnode param;                 // a list of parameters
-   hsnode next;                  // a link for stack
-   hsnode link;                  // hash link for hash-channing
+   unsigned long attributes; // do i need this? dupped in AST
+   hashstack fields;         // if this is struct, it has fields
+   hsnode* structnode;       // if typeid is set, ptr -> struct
+   hsnode param;             // a list of parameters
+   hsnode next;              // a link for stack
+   hsnode link;              // hash link for hash-channing
 };
 
 hashstack new_hashstack (void);
@@ -73,5 +73,5 @@ hsnode peak_hashstack (hashstack this);
 //void list_hashstack (hashstack this, FILE *out);
 
 
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.2 2014-06-10 19:46:08-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.3 2014-06-14 23:54:31-07 - - $")
 #endif

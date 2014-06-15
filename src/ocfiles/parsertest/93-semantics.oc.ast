@@ -1,11 +1,11 @@
 ROOT "<<ROOT>>" 0.0.0
    VARDECL "=" 2.4.8
-      ARR "[]" 2.4.3
+      ARRAY "[]" 2.4.3
          INT "int" 2.4.0
          DECLID "a" 2.4.6
       NIL "null" 2.4.10
    VARDECL "=" 2.5.8
-      ARR "[]" 2.5.3
+      ARRAY "[]" 2.5.3
          INT "int" 2.5.0
          DECLID "b" 2.5.6
       NIL "null" 2.5.10
@@ -16,7 +16,7 @@ ROOT "<<ROOT>>" 0.0.0
          IDENT "a" 2.6.8
          IDENT "b" 2.6.12
    FUNCTION "<<FUNCTION>>" 2.7.4
-      ARR "[]" 2.7.4
+      ARRAY "[]" 2.7.4
          VOID "void" 2.7.0
          DECLID "f" 2.7.7
       PARAM "(" 2.7.8

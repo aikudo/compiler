@@ -1,6 +1,6 @@
 ROOT "<<ROOT>>" 0.0.0
    VARDECL "=" 4.9.16
-      ARR "[]" 4.9.3
+      ARRAY "[]" 4.9.3
          INT "int" 4.9.0
          DECLID "fibonacci" 4.9.6
       NEWARRAY "new" 4.9.18

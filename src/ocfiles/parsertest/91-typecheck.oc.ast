@@ -1,11 +1,11 @@
 ROOT "<<ROOT>>" 0.0.0
    VARDECL "=" 2.7.8
-      ARR "[]" 2.7.3
+      ARRAY "[]" 2.7.3
          INT "int" 2.7.0
          DECLID "a" 2.7.6
       NIL "null" 2.7.10
    VARDECL "=" 2.8.14
-      ARR "[]" 2.8.9
+      ARRAY "[]" 2.8.9
          TYPEID "reference" 2.8.0
          DECLID "a" 2.8.12
       NEWARRAY "new" 2.8.16
@@ -25,10 +25,10 @@ ROOT "<<ROOT>>" 0.0.0
       VOID "void" 2.11.0
          DECLID "foo" 2.11.5
       PARAM "(" 2.11.9
-         ARR "[]" 2.11.13
+         ARRAY "[]" 2.11.13
             INT "int" 2.11.10
             DECLID "a" 2.11.16
-         ARR "[]" 2.11.22
+         ARRAY "[]" 2.11.22
             INT "int" 2.11.19
             DECLID "b" 2.11.25
       BLOCK "{" 2.11.28

@@ -1,7 +1,7 @@
 ROOT "<<ROOT>>" 0.0.0
    STRUCT "struct" 4.7.0
       TYPEID "stack" 4.7.7
-      ARR "[]" 4.8.9
+      ARRAY "[]" 4.8.9
          STRING "string" 4.8.3
          FIELD "data" 4.8.12
       INT "int" 4.9.3
@@ -129,7 +129,7 @@ ROOT "<<ROOT>>" 0.0.0
                NEG "-" 4.35.24
                   INTCON "1" 4.35.25
    VARDECL "=" 4.39.14
-      ARR "[]" 4.39.6
+      ARRAY "[]" 4.39.6
          STRING "string" 4.39.0
          DECLID "argv" 4.39.9
       CALL "(" 4.39.24

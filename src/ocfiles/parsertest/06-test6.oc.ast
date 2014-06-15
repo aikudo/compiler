@@ -44,7 +44,7 @@ ROOT "<<ROOT>>" 0.0.0
          DECLID "s" 4.13.7
       STRINGCON ""a"" 4.13.11
    VARDECL "=" 4.14.12
-      ARR "[]" 4.14.6
+      ARRAY "[]" 4.14.6
          STRING "string" 4.14.0
          DECLID "sa" 4.14.9
       NEWARRAY "new" 4.14.14

@@ -112,7 +112,7 @@ ROOT "<<ROOT>>" 0.0.0
          DECLID "argi" 4.32.4
       INTCON "0" 4.32.11
    VARDECL "=" 4.33.14
-      ARR "[]" 4.33.6
+      ARRAY "[]" 4.33.6
          STRING "string" 4.33.0
          DECLID "argv" 4.33.9
       CALL "(" 4.33.24

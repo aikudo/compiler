@@ -1,6 +1,6 @@
 ROOT "<<ROOT>>" 0.0.0
    VARDECL "=" 4.6.12
-      ARR "[]" 4.6.3
+      ARRAY "[]" 4.6.3
          INT "int" 4.6.0
          DECLID "board" 4.6.6
       NEWARRAY "new" 4.6.14

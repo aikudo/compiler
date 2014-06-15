@@ -118,7 +118,7 @@ ROOT "<<ROOT>>" 0.0.0
          RETURN "return" 4.38.3
             IDENT "tmp" 4.38.10
    VARDECL "=" 4.43.14
-      ARR "[]" 4.43.6
+      ARRAY "[]" 4.43.6
          STRING "string" 4.43.0
          DECLID "argv" 4.43.9
       CALL "(" 4.43.24

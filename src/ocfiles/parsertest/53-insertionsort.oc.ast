@@ -65,7 +65,7 @@ ROOT "<<ROOT>>" 0.0.0
       PARAM "(" 4.22.20
          INT "int" 4.22.21
             DECLID "size" 4.22.25
-         ARR "[]" 4.22.37
+         ARRAY "[]" 4.22.37
             STRING "string" 4.22.31
             DECLID "array" 4.22.40
       BLOCK "{" 4.22.47
@@ -151,7 +151,7 @@ ROOT "<<ROOT>>" 0.0.0
             DECLID "label" 4.43.25
          INT "int" 4.43.32
             DECLID "size" 4.43.36
-         ARR "[]" 4.43.48
+         ARRAY "[]" 4.43.48
             STRING "string" 4.43.42
             DECLID "array" 4.43.51
       BLOCK "{" 4.43.58
@@ -185,7 +185,7 @@ ROOT "<<ROOT>>" 0.0.0
                      IDENT "index" 4.51.14
                      INTCON "1" 4.51.22
    VARDECL "=" 4.55.14
-      ARR "[]" 4.55.6
+      ARRAY "[]" 4.55.6
          STRING "string" 4.55.0
          DECLID "argv" 4.55.9
       CALL "(" 4.55.24

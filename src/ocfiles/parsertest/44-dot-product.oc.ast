@@ -5,10 +5,10 @@ ROOT "<<ROOT>>" 0.0.0
       PARAM "(" 4.5.16
          INT "int" 4.5.17
             DECLID "size" 4.5.21
-         ARR "[]" 4.5.30
+         ARRAY "[]" 4.5.30
             INT "int" 4.5.27
             DECLID "vec1" 4.5.33
-         ARR "[]" 4.5.42
+         ARRAY "[]" 4.5.42
             INT "int" 4.5.39
             DECLID "vec2" 4.5.45
       BLOCK "{" 4.5.51
@@ -44,14 +44,14 @@ ROOT "<<ROOT>>" 0.0.0
          RETURN "return" 4.12.3
             IDENT "dot" 4.12.10
    VARDECL "=" 4.16.11
-      ARR "[]" 4.16.3
+      ARRAY "[]" 4.16.3
          INT "int" 4.16.0
          DECLID "vec1" 4.16.6
       NEWARRAY "new" 4.16.13
          INT "int" 4.16.17
          INTCON "10" 4.16.21
    VARDECL "=" 4.17.11
-      ARR "[]" 4.17.3
+      ARRAY "[]" 4.17.3
          INT "int" 4.17.0
          DECLID "vec2" 4.17.6
       NEWARRAY "new" 4.17.13

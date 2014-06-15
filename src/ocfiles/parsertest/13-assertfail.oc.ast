@@ -50,7 +50,7 @@ ROOT "<<ROOT>>" 0.0.0
          DECLID "getln" 4.40.7
       PARAM "(" 4.40.13
    PROTOTYPE "<<PROTOTYPE>>" 4.41.6
-      ARR "[]" 4.41.6
+      ARRAY "[]" 4.41.6
          STRING "string" 4.41.0
          DECLID "getargv" 4.41.9
       PARAM "(" 4.41.17

@@ -23,11 +23,7 @@
 // ad NULL -> NIL
 //
 // to prevent some random
-// redefine somewhere
-//
-//
-//
-#include "astree.h"
+
 #include "astree.rep.h"
 #include "auxlib.h"
 #include "symtable.h"
@@ -175,7 +171,7 @@ bool is_primitive (bitset_t attributes) {
 
 bool is_reference (bitset_t attributes) {
    return attributes
-          & (ATTR_NULL | ATTR_STRING | ATTR_STRUCT | ATTR_ARRAY);
+          & (ATTR_NULL | ATTR_STRING | ATTR_STRUCT | ATTR_ARRAY) && 1;
 }
 
 char *tostr(hsnode it){
@@ -239,7 +235,7 @@ void exitblock(astree root){
 }
 
 
-bool checktype(astree type, astree ident){
+bool checktypeid(astree type, astree ident){
    if(find_hashstack(types, type->lexeme)){
       return true;
    }else{
@@ -250,54 +246,56 @@ bool checktype(astree type, astree ident){
 }
 
 
-//
-//grammar:= fielddecl | identdecl -> basetype []? FIELD
-//basetype is root. If exist '[]', it's the first child.
-//FIELD/DECLID is the next child.
-//
-//set flags on an identifier AST node and return that token
+/*
+   Find DECLID token based on its root.
+   Return DECLID node with attributes are set.
+
+grammar: basetype [ ‘[]’ ] FIELD | DECLID
+
+e.g.:
+
+   ARRAY "[]" 4.9.3
+      INT "int" 4.9.0
+      DECLID "fibonacci" 4.9.6
+
+   INT "int" 4.14.0
+      DECLID "index" 4.14.4
+
+   TYPEID "stack" 4.20.3
+      DECLID "stack" 4.20.9
+
+*/
 
 astree basetype(astree root){
-   astree ident, type;
+   astree declid, type;
    bitset_t attributes = 0;
    if(root->symbol == ARRAY){
       type = root->first;
-      ident = type->next;
+      declid = type->next;
       attributes = ATTR_ARRAY;
    } else{
       type = root;
-      ident = type->first;
+      declid = type->first;
    }
 
+   assert(declid->symbol == FIELD || declid->symbol == DECLID);
+
    switch(type->symbol){
-      //case NIL    : // null type is not supported except for return
       case VOID   : attributes |= ATTR_VOID; break;
       case BOOL   : attributes |= ATTR_BOOL; break;
       case CHAR   : attributes |= ATTR_CHAR; break;
       case INT    : attributes |= ATTR_INT; break;
       case STRING : attributes |= ATTR_STRING; break;
-      case TYPEID : checktype(type, ident);
-                    ident->structid = type;
+      case TYPEID : checktypeid(type, declid);
+                    declid->stypeid = type->lexeme;
                     attributes |= ATTR_STRUCT; break;
-      default:
-                     STUBPRINTF("ERROR: Uncaught symbol%s\n",
-                        get_yytname(type->symbol));
-                     exit(1);
+      default: STUBPRINTF("ERROR: Uncaught symbol%s\n",
+                     get_yytname(type->symbol)); exit(1);
    }
 
-   ident->attributes = attributes;
-   return ident;
+   declid->attributes = attributes;
+   return declid;
 }
-
-// Struct has its own namespace.
-// It can't collide except when it defines e.g.
-//
-// struct foo {}                 //declare
-// struct foo { int a; foo a; }  //define
-// struct foo {}  //fail
-//
-// Member fields are in their own name space for each struct.
-//
 
 
 void setattr(hsnode node, const astree const item){
@@ -319,12 +317,32 @@ hsnode add(hashstack this, const astree const item){
    return node;
 }
 
+// 
+// Struct has its own namespace.
+//
+// struct foo {}                 //declare
+// struct foo { int a; foo a; }  //define
+// struct foo {}  //fail
+//
+// Member fields are in their own namespace for each struct.
+//
+//   STRUCT "struct" 4.7.0
+//      TYPEID "stack" 4.7.7
+//      ARRAY "[]" 4.8.9
+//         STRING "string" 4.8.3
+//         FIELD "data" 4.8.12
+//      INT "int" 4.9.3
+//         FIELD "size" 4.9.7
+//      INT "int" 4.10.3
+//         FIELD "top" 4.10.7
+
 void structblock(astree root){
    astree typeid = root->first;
+   assert(typeid->SYMBOL == TYPEID);
    DEBUGF('s', "struct %s\n",typeid->lexeme);
    hsnode found = find_hashstack(types, typeid->lexeme);
 
-   if(found && found->fields){
+   if(found && found->fields){   //already defined
       prndup("struct", found, typeid);
       return;
    }else if(!found){
@@ -333,7 +351,7 @@ void structblock(astree root){
    }
 
    astree member = typeid->next;
-   if(!member) return; // no definition
+   if(!member) return; // no definition; it's a declaration.
 
    hashstack fields = new_hashstack();
    for(; member; member = member->next){
@@ -347,36 +365,64 @@ void structblock(astree root){
          push_hashstack(fields, addedfield);
       }
    }
-   setattr(found, typeid);
+   setattr(found, typeid); //overwrite declaration w/ definition
    found->fields = fields;
 }
-//
-//Functions and variables share a same name space.
-//Functions are global, while variables can be global or local.
-//Global can't overwrite global.
-//Local variable can shadow global variable ONLY.
-//Local can't be collided with upper scope declaration.
-//
+
+/*
+ vardecl: variable declaration/initialization
+ grammar:  vardecl: identdecl `=' expr `;'
+ e.g.: 
+      int [] a = 4; 
+      stack stack = NULL;
+
+VARDECL "=" 4.9.16
+   ARRAY "[]" 4.9.3
+      INT "int" 4.9.0
+      DECLID "fibonacci" 4.9.6
+
+VARDECL "=" 4.14.10
+   INT "int" 4.14.0
+      DECLID "index" 4.14.4
+   INTCON "2" 4.14.12
+
+VARDECL "=" 4.20.15
+   TYPEID "stack" 4.20.3
+      DECLID "stack" 4.20.9
+
+VARDECL "=" 4.36.14
+   STRING "string" 4.36.3
+      DECLID "tmp" 4.36.10
+
+   Functions and variables share a same name space.
+   Functions are global, while variables can be global or local.
+   Global can't overwrite global.
+   Local variable can shadow global variable ONLY.
+   Local can't be collided with upper scope declaration.
+      
+*/
 
 void vardecl (astree root){
    astree type = root->first;
-   astree ident = basetype(type);
+   astree declid = basetype(type);
    DEBUGF('v', "bid:%d %s %s\n",
-         topblock(), type->lexeme, ident->lexeme);
-   hsnode orig = find_hashstack(idents, ident->lexeme);
+         topblock(), type->lexeme, declid->lexeme);
+   hsnode orig = find_hashstack(idents, declid->lexeme);
    if(orig){
-      if(orig->block != GLOBAL || 
-            (orig->block == GLOBAL && idents->block == GLOBAL)){
-         prndup("vardecl", orig, ident);
+      if(orig->block != GLOBAL ||   //upper scope that isn't global
+            //global scope collision
+            //(orig->block == GLOBAL && idents->block == GLOBAL)){
+            (orig->block == GLOBAL && topblock() == GLOBAL)){
+         prndup("vardecl", orig, declid);
          return;
       }else{ //shadow the global variable
          hsnode globalident = rm_hashstack(idents, orig->lexeme);
          push_hashstack(idents, globalident); //save global ident
       }
    }
-   ident->attributes |= ATTR_LVALUE | ATTR_VARIABLE;
-   ident->block = topblock();  //block-stamp the ident
-   hsnode newident = add(idents, ident);
+   declid->attributes |= ATTR_LVALUE | ATTR_VARIABLE;
+   declid->block = topblock();  //block-stamp the ident
+   hsnode newident = add(idents, declid);
    push_hashstack(idents, newident);
 }
 
@@ -496,19 +542,38 @@ bool matchfunction(const astree const fn,
    return ismatch;
 }
 
-//
-// Function and prototype is different only by a body block.
-// Names of function and prototype are in global name space.
-// While param and body block is in the same name space.
-//
-
-astree currentfunction = NULL; //function return type
+astree currentfunction = NULL; //processing this current function
 
 void exitfunction(astree root){
    DEBUGF('F', "exit: %s\n", atostr(root->first->first));
    currentfunction = NULL;
    exitblock(root);
 }
+
+//
+// Function and prototype is different only by a body block.
+// Names of function and prototype are in global name space.
+// While param and body block is in the same name space.
+//
+//   PROTOTYPE "<<PROTOTYPE>>" 4.8.0
+//      INT "int" 4.8.0
+//         DECLID "f0" 4.8.4
+//      PARAM "(" 4.8.7
+//   PROTOTYPE "<<PROTOTYPE>>" 4.9.0
+//      INT "int" 4.9.0
+//         DECLID "f1" 4.9.4
+//      PARAM "(" 4.9.7
+//         INT "int" 4.9.8
+//            DECLID "a" 4.9.12
+//
+//   FUNCTION "<<FUNCTION>>" 4.14.0
+//      BOOL "bool" 4.14.0
+//         DECLID "empty" 4.14.5
+//      PARAM "(" 4.14.11
+//         TYPEID "stack" 4.14.12
+//            DECLID "stack" 4.14.18
+//      BLOCK "{" 4.14.25
+//
 
 void function(astree root){
    DEBUGF('F', "enter: %s\n", atostr(root->first->first));
@@ -644,27 +709,40 @@ bool hasany(astree node){
    }
 }
 
-//this needs to further examine all classes because
-//returning type of the 'same' struct should be okay
+// supported types
+// bool, char, int, string, struct (user defined type), basetype []
 //
 bool iscompatible(astree left, astree right){
    bitset_t la = left->attributes;
    bitset_t ra = right->attributes;
+
    bool primitivematch =
-      (is_primitive(la) && is_primitive(ra)) && 
-      (  
-         (la & ATTR_BOOL)   ==  (ra & ATTR_BOOL)   ||
-         (la & ATTR_CHAR)   ==  (ra & ATTR_CHAR)   ||
-         (la & ATTR_INT)    ==  (ra & ATTR_INT)
-      );
+      (is_primitive(la) && is_primitive(ra)) &&
+         (  ((la & ATTR_BOOL)   &&  (ra & ATTR_BOOL))   ||
+            ((la & ATTR_CHAR)   &&  (ra & ATTR_CHAR))   ||
+            ((la & ATTR_INT)    &&  (ra & ATTR_INT))    ||
+            ((la & ATTR_STRING) &&  (ra & ATTR_STRING))
+         );
+
+   bool structmatch = 
+      ((la &ATTR_STRUCT)  == (ra & ATTR_STRUCT)) &&
+         (  find_hashstack(types, left->lexeme) == 
+            find_hashstack(types, right->lexeme)
+         );
+
    bool referencecompatible =
       ((la & ATTR_NULL)  &&  is_reference(ra)) ||
       (is_reference(la)  &&  (ra & ATTR_NULL)) ;
 
-   //Note string to string, or struct to struct types are 
-   //not compatible. Pointer is only compatible with null.
+   bool arraymatch =  (primitivematch || structmatch) &&
+      ((la & ATTR_ARRAY ) && (ra & ATTR_ARRAY ));
 
-   bool compatible = primitivematch || referencecompatible;
+   bool compatible = 
+      primitivematch ||
+      referencecompatible ||
+      structmatch ||
+      arraymatch ;
+
    if(compatible) return true;
    else{
       eprintf("%s [%s] is not compatible with %s [%s].\n",
@@ -686,8 +764,11 @@ void checkequality(astree root){
 void checkvardecl(astree root){
    astree left = root->first;
    astree right = left->next;
-   iscompatible(left, right);
-
+   if(!iscompatible(left, right)){
+      eprintf("%s %s are not compatible for variable declaration \n", 
+            print_attributes(left->attributes),
+            print_attributes(right->attributes));
+   }
 }
 
 void checkwhileif(astree root){
@@ -699,19 +780,94 @@ void checkwhileif(astree root){
 //check on return type vs function declaration of return type
 //matched struct should be okay.
 void checkreturn(astree root){
-   astree expr = root->first;
    assert(currentfunction != NULL);
-   iscompatible(expr, currentfunction); //TODO
-   //need to check same type of everthing
-   STUBPRINTF("check returning type\n");
+   if(root->symbol == RETURNVOID && currentfunction->first){
+      eprintf( "Expect return with an argument for function %s\n", 
+            atostr(currentfunction));
+      return;
+   }
+   if( !iscompatible(root->first, currentfunction->first)){
+      eprintf( "Mismatched return%s function%s types\n.",
+            atostr(root->first),
+            atostr(currentfunction->first));
+      return;
+   }
 }
 
 void checkassignment(astree root){
    STUBPRINTF("check returning type%s\n", atostr(root));
 }
-void checkselect(astree root){
+
+
+//(e) Identifiers have the type attributes that they derive
+//from the symbol table. In addition, either the function or
+//variable attribute will be present, and for variables that are
+//parameters, also the param attribute. All variables also have
+//the lvalue attribute.
+
+
+void checkident(astree root){
+   hsnode ident = find_hashstack(idents, root->lexeme);
+   if(!ident){
+      eprintf("Identifier %s has not declared.\n", atostr(root));
+   }else{
+      eprintf("Ident found %s (%s)\n", tostr(ident),
+      print_attributes(ident->attributes));
+      root->attributes = ident->attributes;
+      root->structid = ident->structid;
+   }
+}
+
+/*
+TYPEID ‘.’ FIELD → symbol.lookup vaddr lvalue
+
+(f) Field selection sets the selector (.) attribute as follows:
+The left operand must be a struct type or an error message
+is generated. Look up the field in the structure and copy its
+type attributes to the selector, removing the field attribute
+and adding the vaddr attribute.
+
+*/
+
+//IDENT FILLED, FIELD has not filled
+//  
+//  example:
+//  struct node { int a; int b}
+//  ...
+//  node somenode; 
+//  ...
+//  ...
+//  somenode.b = 5;
+//  
+
+void checkcall(astree root){
    STUBPRINTF("check returning type%s\n", atostr(root));
 }
+
+void checkselect(astree root){
+
+   astree typeid = root->first;
+   hsnode structid = find_hashstack(types, typeid->structid);
+   astree field = typeid->next;
+   hasattrib(typeid, ATTR_STRUCT);
+
+   //assert(structid != NULL);
+
+   if(structid == NULL){
+      eprintf("%s has unknown struct type %s\n", 
+            atostr(typeid), typeid->structid);
+      return;
+   }
+
+   hashstack fields = structid->fields;
+   hsnode foundfield = find_hashstack(fields, field->lexeme);
+   if(foundfield == NULL){
+      eprintf("field %s is not in struct %s\n",
+            tostr(foundfield), tostr(structid));
+      return;
+   }
+}
+
 void checkindexselect(astree root){
    STUBPRINTF("check returning type%s\n", atostr(root));
 }
@@ -779,10 +935,6 @@ void preproc(astree root){
 
 //   sed 's/^[ \t]*//' *.ast | awk '{print $1}' |sort |uniq >symbols.txt 
 //
-//  '='
-//  '-'
-//  ';'
-//  '!'
 //  '.'
 //  ')'
 //  ']'
@@ -790,11 +942,8 @@ void preproc(astree root){
 //  '*'
 //  '+'
 //  ARR
-//  BLOCK
 //  BOOL
-//  CALL
 //  CHAR
-//  CHARCON
 //  DECLID
 //  EQ
 //  FALSE
@@ -802,15 +951,8 @@ void preproc(astree root){
 //  FUNCTION
 //  GT
 //  IDENT
-//  IF
-//  IFELSE
 //  INDEX
 //  INT
-//  INTCON
-//  LE
-//  LT
-//  NE
-//  NEG
 //  NEW
 //  NEWARRAY
 //  NIL
@@ -834,59 +976,62 @@ void preproc(astree root){
 
 void postproc(astree root){
    switch(root->symbol){
-      case BLOCK     : exitblock(root); break;
-      case PROTOTYPE : 
-      case FUNCTION  : exitfunction(root); break;
+      case BLOCK      : exitblock(root); break;
+      case PROTOTYPE  : 
+      case FUNCTION   : exitfunction(root); break;
 
-      case VARDECL   : checkvardecl(root); break;
+      case VARDECL    : checkvardecl(root); break;
 
-      case WHILE     : 
-      case IFELSE    : 
-      case IF        : checkwhileif(root); break;
+      case WHILE      : 
+      case IFELSE     : 
+      case IF         : checkwhileif(root); break;
 
-      case RETURN    : checkreturn(root); break;
+      case RETURNVOID :
+      case RETURN     : checkreturn(root); break;
 
-      case '='       : checkassignment(root); break;
+      case '='        : checkassignment(root); break;
 
-      case EQ        : 
-      case NE        : checkequality(root); break;
+      case EQ         : 
+      case NE         : checkequality(root); break;
 
-      case LT        : 
-      case LE        : 
-      case GT        : 
-      case GE        : checkcompare(root); break;
+      case LT         : 
+      case LE         : 
+      case GT         : 
+      case GE         : checkcompare(root); break;
 
-      case '+'       : 
-      case '-'       : 
-      case '*'       : 
-      case '/'       : 
-      case '%'       : checkbinary(root); break;
+      case '+'        : 
+      case '-'        : 
+      case '*'        : 
+      case '/'        : 
+      case '%'        : checkbinary(root); break;
 
-      case NEG       : 
-      case POS       : 
-      case '!'       : 
-      case ORD       : 
-      case CHR       : checkunary(root); break;
+      case NEG        : 
+      case POS        : 
+      case '!'        : 
+      case ORD        : 
+      case CHR        : checkunary(root); break;
 
 
       //4.4.4
-      case NEW       : //new struct type
-      case NEWARRAY  : //new standard void, bool, char, int, string
-      case NEWSTRING : //a special case for new string
+      case NEW        : //new struct type
+      case NEWARRAY   : //new standard void, bool, char, int, string
+      case NEWSTRING  : //a special case for new string
 
-      case CALL      : //function call
-      case IDENT     : //checkident(root); break;
+                        //IDENT ‘(’ compatible ‘)’ → symbol.lookup
 
-      case INDEX     : checkindexselect(root); break;
+      case CALL       : checkcall(root); break;
+      case IDENT      : checkident(root); break;
 
-      case '.'       : checkselect(root); break;
+      case INDEX      : checkindexselect(root); break;
 
-      case INTCON    : 
-      case CHARCON   : 
-      case STRINGCON : 
-      case NIL       : 
-      case FALSE     : 
-      case TRUE      : checkconst(root); break;
+      case '.'        : checkselect(root); break;
+
+      case INTCON     : 
+      case CHARCON    : 
+      case STRINGCON  : 
+      case NIL        : 
+      case FALSE      : 
+      case TRUE       : checkconst(root); break;
    }
 }
 
@@ -960,4 +1105,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.17 2014-06-12 04:05:19-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.18 2014-06-14 23:54:31-07 - - $")
