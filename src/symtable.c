@@ -815,7 +815,7 @@ void checkassignment(astree root){
 void checkident(astree root){
    hsnode ident = find_hashstack(idents, root->lexeme);
    if(!ident){
-      eprintf("Identifier %s has not declared.\n", atostr(root));
+      eprintf("Identifier %s is not declared.\n", atostr(root));
    }else{
       eprintf("Ident found %s (%s)\n", tostr(ident),
       print_attributes(ident->attributes));
@@ -824,20 +824,41 @@ void checkident(astree root){
    }
 }
 
-/*
-TYPEID ‘.’ FIELD → symbol.lookup vaddr lvalue
+// Function call can have zero ore more parameters. Check for all of
+// this can be a hard problem....
+// e.g. somefunct(43, "helo", somenode);
+// someother();
 
-(f) Field selection sets the selector (.) attribute as follows:
-The left operand must be a struct type or an error message
-is generated. Look up the field in the structure and copy its
-type attributes to the selector, removing the field attribute
-and adding the vaddr attribute.
+// 58 print_array ("unsorted", argc, argv);
+//
+// 208    CALL "(" 4.58.12
+// 209       IDENT "print_array" 4.58.0
+// 210       STRINGCON ""unsorted"" 4.58.13
+// 211       IDENT "argc" 4.58.25
+// 212       IDENT "argv" 4.58.31
+//
 
-*/
-
+//function argument is in reversed order
+//assumed the arguments are correct. Ignore this part for now
+//bool checkargument(args, params){
+//   hsnode list =  calloc(1, struct node);
+//   hsnode tail = list->param;
+//   for(hsnode param = params; param; param = param->param){
+//      tail = 
+//}
+//
 
 void checkcall(astree root){
-   STUBPRINTF("check returning type%s\n", atostr(root));
+   astree ident =  root->first;
+   hsnode fnident = find_hashstack(idents, ident->lexeme);
+   if(!fnident){
+      eprintf("Function %s is not declared.\n", atostr(ident));
+      return;
+   }
+   //checkargument(ident->next fnident->next);
+
+   root->attributes = fnident->attributes;
+   root->attributes |= ATTR_VREG;
 }
  
 //IDENT FILLED, FIELD has not filled
@@ -861,6 +882,12 @@ void checkcall(astree root){
 //            NEWARRAY "new" 4.15.16
 //               STRING "string" 4.15.20
 //               IDENT "size" 4.15.27
+//TYPEID ‘.’ FIELD → symbol.lookup vaddr lvalue
+//(f) Field selection sets the selector (.) attribute as follows:
+//The left operand must be a struct type or an error message
+//is generated. Look up the field in the structure and copy its
+//type attributes to the selector, removing the field attribute
+//and adding the vaddr attribute.
 
 void checkselect(astree root){
    astree typeid = root->first;
@@ -885,10 +912,6 @@ void checkselect(astree root){
    root->attributes |= ATTR_VADDR;
    root->attributes &= ~ATTR_FIELD;
 
-}
-
-void checkindexselect(astree root){
-   STUBPRINTF("check returning type%s\n", atostr(root));
 }
 
 
@@ -951,6 +974,26 @@ bool isbasetype(astree type){
    return base;
 }
 
+//
+//basetype[] ‘[’ int ‘]’ → basetype vaddr lvalue
+//‘string’ ‘[’ int ‘]’ → char vaddr lvalue
+//string is a special case where it doesn't need ATTR_ARRAY flag
+//
+void checkindexselect(astree root){
+   astree type = root->first;
+   astree index = type->next;
+
+   hasattrib(index, ATTR_INT);
+
+   if(type->attributes & ATTR_STRING){
+      root->attributes = ATTR_CHAR | ATTR_VADDR | ATTR_LVALUE;
+   } else if(isbasetype(type) && (type->attributes & ATTR_ARRAY)){
+      root->attributes = type->attributes | ATTR_VADDR | ATTR_LVALUE;
+      root->attributes &= ~ATTR_ARRAY;
+   }else{
+      eprintf("%s is not a string nor an array.\n", atostr(type));
+   }
+}
 //‘new’ basetype ‘[’ int ‘]’ → basetype[] vreg
 
 void checknewarray(astree root){
@@ -970,11 +1013,6 @@ void checknewstring(astree root){
    hasattrib(child, ATTR_INT);
    root->attributes = ATTR_STRING | ATTR_VREG;
 }
-
-
-
-
-
 
 void preproc(astree root){
    switch(root->symbol){
@@ -1066,8 +1104,6 @@ void postproc(astree root){
       case ORD        : 
       case CHR        : checkunary(root); break;
 
-
-      //4.4.4
       case NEW        : checknew(root); break;
       case NEWARRAY   : checknewarray(root); break;
       case NEWSTRING  : checknewstring(root); break;
@@ -1160,4 +1196,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.19 2014-06-15 03:38:36-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.21 2014-06-15 11:53:08-07 - - $")
