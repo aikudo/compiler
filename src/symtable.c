@@ -1,28 +1,25 @@
-/*
- * There are two parts to this phase.
- * First build a simple table that stores identifiers
- * and their properties. This is done by top-down
- * traversing an abstract syntax tree.
- * Second, `strong' type-checking all the
- * expressions. This is done by a bottom-up
- * traversal. These two can be combined in one
- * traversal as in:
- *    traverse(root){
- *       preproc(root);
- *       traverse(root->child);
- *       postproc(root);
- *    }
- *
- *
- * */
-
-
+//
+// There are two parts to this phase.
+// First build a simple table that stores identifiers
+// and their properties. This is done by top-down
+// traversing an abstract syntax tree.
+// Second, `strong' type-checking all the
+// expressions. This is done by a bottom-up
+// traversal. These two can be combined in one
+// traversal as in:
+//    traverse(root){
+//       preproc(root);
+//       traverse(root->child);
+//       postproc(root);
+//    }
+//
+//
 // TODO:
 // should change the TRUE -> TRU
 // and FALSE -> FAL
-// ad NULL -> NIL
+// and NULL -> NIL
 //
-// to prevent some random
+// to mangle common tokens
 
 #include "astree.rep.h"
 #include "auxlib.h"
@@ -202,7 +199,7 @@ void prnerr( hsnode it, char *errmsg){
    eprintf("%s: %s\n", tostr(it), errmsg);
 }
 
-/*----------------------------------------------------------------*/
+//----------------------------------------------------------------
 //  Building a symbol table
 //  Top-down a.k.a. pre-fix processing
 
@@ -246,25 +243,22 @@ bool checktypeid(astree type, astree ident){
 }
 
 
-/*
-   Find DECLID token based on its root.
-   Return DECLID node with attributes are set.
-
-grammar: basetype [ ‘[]’ ] FIELD | DECLID
-
-e.g.:
-
-   ARRAY "[]" 4.9.3
-      INT "int" 4.9.0
-      DECLID "fibonacci" 4.9.6
-
-   INT "int" 4.14.0
-      DECLID "index" 4.14.4
-
-   TYPEID "stack" 4.20.3
-      DECLID "stack" 4.20.9
-
-*/
+//    Find DECLID token based on its root.
+//    Return DECLID node with attributes are set.
+// 
+// grammar: basetype [ ‘[]’ ] FIELD | DECLID
+// 
+// e.g.:
+// 
+//    ARRAY "[]" 4.9.3
+//       INT "int" 4.9.0
+//       DECLID "fibonacci" 4.9.6
+// 
+//    INT "int" 4.14.0
+//       DECLID "index" 4.14.4
+// 
+//    TYPEID "stack" 4.20.3
+//       DECLID "stack" 4.20.9
 
 astree basetype(astree root){
    astree declid, type;
@@ -369,38 +363,36 @@ void structblock(astree root){
    found->fields = fields;
 }
 
-/*
- vardecl: variable declaration/initialization
- grammar:  vardecl: identdecl `=' expr `;'
- e.g.: 
-      int [] a = 4; 
-      stack stack = NULL;
-
-VARDECL "=" 4.9.16
-   ARRAY "[]" 4.9.3
-      INT "int" 4.9.0
-      DECLID "fibonacci" 4.9.6
-
-VARDECL "=" 4.14.10
-   INT "int" 4.14.0
-      DECLID "index" 4.14.4
-   INTCON "2" 4.14.12
-
-VARDECL "=" 4.20.15
-   TYPEID "stack" 4.20.3
-      DECLID "stack" 4.20.9
-
-VARDECL "=" 4.36.14
-   STRING "string" 4.36.3
-      DECLID "tmp" 4.36.10
-
-   Functions and variables share a same name space.
-   Functions are global, while variables can be global or local.
-   Global can't overwrite global.
-   Local variable can shadow global variable ONLY.
-   Local can't be collided with upper scope declaration.
-      
-*/
+// vardecl: variable declaration/initialization
+// grammar:  vardecl: identdecl `=' expr `;'
+// e.g.: 
+//      int [] a = 4; 
+//      stack stack = NULL;
+//
+//VARDECL "=" 4.9.16
+//   ARRAY "[]" 4.9.3
+//      INT "int" 4.9.0
+//      DECLID "fibonacci" 4.9.6
+//
+//VARDECL "=" 4.14.10
+//   INT "int" 4.14.0
+//      DECLID "index" 4.14.4
+//   INTCON "2" 4.14.12
+//
+//VARDECL "=" 4.20.15
+//   TYPEID "stack" 4.20.3
+//      DECLID "stack" 4.20.9
+//
+//VARDECL "=" 4.36.14
+//   STRING "string" 4.36.3
+//      DECLID "tmp" 4.36.10
+//
+//   Functions and variables share a same name space.
+//   Functions are global, while variables can be global or local.
+//   Global can't overwrite global.
+//   Local variable can shadow global variable ONLY.
+//   Local can't be collided with upper scope declaration.
+//      
 
 void vardecl (astree root){
    astree type = root->first;
@@ -500,6 +492,7 @@ bool functioncompare(hsnode this, hsnode that){
 //
 //Requirement: Can't touch existed idents table and block counter
 //
+
 bool matchfunction(const astree const fn, 
       const astree const paramlist, const hsnode const fn2){
 
@@ -628,7 +621,6 @@ void setconst(astree root){
    root->attributes = attributes | ATTR_CONST;
 }
 
-/*----------------------------------------------------------------*/
 //
 //Type checking
 // Bottom-up, a.k.a. post-fix processing
@@ -672,6 +664,7 @@ bool hasany(astree node){
 // supported types
 // bool, char, int, string, struct (user defined type), basetype []
 //
+
 bool iscompatible(astree left, astree right){
    bitset_t la = left->attributes;
    bitset_t ra = right->attributes;
@@ -994,6 +987,7 @@ void checkindexselect(astree root){
       eprintf("%s is not a string nor an array.\n", atostr(type));
    }
 }
+
 //‘new’ basetype ‘[’ int ‘]’ → basetype[] vreg
 
 void checknewarray(astree root){
@@ -1026,46 +1020,10 @@ void preproc(astree root){
    }
 }
 
-//   sed 's/^[ \t]*//' *.ast | awk '{print $1}' |sort |uniq >symbols.txt 
 //
-//  '.'
-//  ')'
-//  ']'
-//  '}'
-//  '*'
-//  '+'
-//  ARR
-//  BOOL
-//  CHAR
-//  DECLID
-//  EQ
-//  FALSE
-//  FIELD
-//  FUNCTION
-//  GT
-//  IDENT
-//  INDEX
-//  INT
-//  NEW
-//  NEWARRAY
-//  NIL
-//  ORD
-//  PARAM
-//  PROTOTYPE
-//  RETURN
-//  RETURNVOID
-//  ROOT
-//  STRING
-//  STRINGCON
-//  STRUCT
-//  TRUE
-//  TYPEID
-//  VARDECL
-//  VOID
-//  WHILE
-//  
-//  should catch all of those symbols in the post processing
-//  There is also a NEWSTRING that is not used in all test cases
+//  sed 's/^[ \t]*//' *.ast | awk '{print $1}' |sort |uniq >symbols.txt 
+//  Should catch all of those symbols in the post processing.
+//
 
 void postproc(astree root){
    switch(root->symbol){
@@ -1107,8 +1065,6 @@ void postproc(astree root){
       case NEW        : checknew(root); break;
       case NEWARRAY   : checknewarray(root); break;
       case NEWSTRING  : checknewstring(root); break;
-
-                        //IDENT ‘(’ compatible ‘)’ → symbol.lookup
 
       case CALL       : checkcall(root); break;
       case IDENT      : checkident(root); break;
@@ -1186,14 +1142,12 @@ void printsym(astree node, int height){
 void buildsym(void){
    idents = new_hashstack();
    types = new_hashstack();
-   pushblock(); //3.1 b) global node is set to 0.
+   pushblock(); //initialize global node to 0.
 
    printf("root %p\n", yyparse_astree);
    traverse(yyparse_astree);
    printsym(yyparse_astree, 0);
-
-   //exitblock();
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.21 2014-06-15 11:53:08-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.22 2014-06-15 12:13:23-07 - - $")
