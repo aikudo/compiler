@@ -281,7 +281,7 @@ astree basetype(astree root){
    assert(declid->symbol == FIELD || declid->symbol == DECLID);
 
    switch(type->symbol){
-      case VOID   : attributes |= ATTR_VOID; break;
+      case VOID   : attributes |= ATTR_VOID; break; //return functype
       case BOOL   : attributes |= ATTR_BOOL; break;
       case CHAR   : attributes |= ATTR_CHAR; break;
       case INT    : attributes |= ATTR_INT; break;
@@ -338,7 +338,7 @@ hsnode add(hashstack this, const astree const item){
 
 void structblock(astree root){
    astree typeid = root->first;
-   assert(typeid->SYMBOL == TYPEID);
+   assert(typeid->symbol == TYPEID);
    DEBUGF('s', "struct %s\n",typeid->lexeme);
    hsnode found = find_hashstack(types, typeid->lexeme);
 
@@ -426,6 +426,11 @@ void vardecl (astree root){
    push_hashstack(idents, newident);
 }
 
+//
+//attach a list of parameters to a function
+//If tmpscope is _not_ set, use the same namescape of idents 
+//hashstable. Otherwise create a temperary namespace.
+//
 
 hsnode attachparam(astree fn, astree paramlist, bool tmpscope){
 
@@ -455,51 +460,24 @@ hsnode attachparam(astree fn, astree paramlist, bool tmpscope){
 
 
 
-
 //
-// A function has its name at the head of the list
-// subsequence nodes are parameters.
-// Match the names and attributes.
+// Two functions are matched when all their params and functions are
+// exactly the same.
+//
+// A function has its name at the head of the list subsequence 
+// nodes are parameters.
 //
 // Note: prototype has to be in this form because of grammar
 //    fun|proto -> identdecl ( identdecl* ) block
 //    block -> { statements* } | ;
 // e.g.: type proto ( type var1, type var2 );
 //
-// It's an error without variable names. It'll catch by parser.
-//
-//
 
-bool match(hsnode this, hsnode that){
-//   for(; this && that; this = this->param, that = that->param){
-//      match = this->lexeme == that->lexeme &&
-//         this->attributes == that->attributes;
-//      if(!match) return false;
-
-//   hsnode it = this;
-//   printf("this: ");
-//   while (it){
-//      printf("%s ", tostr(it));
-//      print_attributes(it->attributes);
-//      printf("\n");
-//      it = it->param;
-//   }
-//
-//   it = that;
-//   printf("that: ");
-//   while (it){
-//      printf("%s ", tostr(it));
-//      print_attributes(it->attributes);
-//      printf("\n");
-//      it = it->param;
-//   }
-//
-
+bool functioncompare(hsnode this, hsnode that){
 
    if(this == NULL && that == NULL) return true;
    bool match = false;
    bool started = false;
-   int i = 0;
    for(;;){
       if(!this) break;
       if(!that) break;
@@ -508,21 +486,11 @@ bool match(hsnode this, hsnode that){
       match = this->lexeme == that->lexeme &&
          this->attributes == that->attributes;
 
-//      printf ("%d:%d check %s: %s ", i++, match, 
-//            tostr(this), tostr(that));
-//      print_attributes(this->attributes);
-//      print_attributes(that->attributes);
-//      printf("\n");
-//      printf( "details %p %p %lu %lu\n",
-//            this->lexeme, that->lexeme,
-//            this->attributes, that->attributes );
-
       if(!match) return false;
       this = this->param;
       that = that->param;
    }
 
-   (void)i;
    return match && (this == that) ;
 }
 
@@ -531,14 +499,15 @@ bool match(hsnode this, hsnode that){
 //then compare this new hsnode fn against fn2
 //
 //Requirement: Can't touch existed idents table and block counter
+//
 bool matchfunction(const astree const fn, 
       const astree const paramlist, const hsnode const fn2){
 
    hsnode fn1 = attachparam(fn, paramlist, 1);
-   bool ismatch = match(fn1,fn2);
+   bool ismatch = functioncompare(fn1,fn2);
    if(ismatch) DEBUGF('M', "MATCH %s %s \n", tostr(fn1), tostr(fn2));
    else DEBUGF('M', "NOTMATCH %s %s \n", tostr(fn1), tostr(fn2));
-   //delete tmphash & clean other malloc/new
+   //delete tmphash & clean other malloc/new at this spot
    return ismatch;
 }
 
@@ -575,9 +544,8 @@ void exitfunction(astree root){
 //      BLOCK "{" 4.14.25
 //
 
-void function(astree root){
+void enterfunction(astree root){
    DEBUGF('F', "enter: %s\n", atostr(root->first->first));
-   currentfunction = root;
    astree type = root->first;
    astree paramlist = type->next;
    astree ident = basetype(type);
@@ -586,7 +554,7 @@ void function(astree root){
                         ATTR_FUNCTION : ATTR_PROTOTYPE;
 
    DEBUGF('F', "FUNC: %s %s\n", atostr(type), atostr(ident));
-
+   currentfunction = ident;
 
    //check whether there is an existed prototype of function
    //find(funcid)
@@ -608,7 +576,6 @@ void function(astree root){
 
 
    hsnode orig = find_hashstack(idents, ident->lexeme);
-
    if(orig){
       if(orig->attributes & ATTR_FUNCTION){     //function existed
          eprintf("%s is already defined by function:%s\n",
@@ -621,7 +588,7 @@ void function(astree root){
             eprintf("proto:%s is mismatched with a declared %s\n",
                atostr(ident), tostr(orig));
          }
-      }else{ //ident is function % orig is a prototype
+      }else{ //ident is function and orig is a prototype
          ident->attributes &= ~(ATTR_FUNCTION);
          ident->attributes |= ATTR_PROTOTYPE;
          if(matchfunction(ident,paramlist, orig)){
@@ -641,6 +608,8 @@ void function(astree root){
       enterblock(ident);
       return;
    }
+
+   //we'll enterblock() when attach paramlist to a function ident
    hsnode fn = attachparam(ident, paramlist, false);
    ident->sym = fn;
 }
@@ -659,20 +628,12 @@ void setconst(astree root){
    root->attributes = attributes | ATTR_CONST;
 }
 
-void checkconst(astree root){
-   //Literals are set by above so just propagate attributes 
-   //from constant literals to parent. No need to check.
-   root->attributes = root->first->attributes;
-}
-
-
 /*----------------------------------------------------------------*/
 //
 //Type checking
 // Bottom-up, a.k.a. post-fix processing
 //
 
-//can check only one attribute at a time!
 bool hasattrib( astree node, bitset_t attribute ){
    if(node->attributes & attribute) return true;
    else{
@@ -691,8 +652,7 @@ bool hasboolean(astree node){
 }
 
 bool hasprimitive(astree node){
-   if(is_primitive(node->attributes))
-      return true;
+   if(is_primitive(node->attributes)) return true;
    else{
       eprintf("%s is not a primitive type.\n", atostr(node));
       return false;
@@ -700,8 +660,8 @@ bool hasprimitive(astree node){
 }
 
 bool hasany(astree node){
-   if(is_primitive(node->attributes) || is_reference(node->attributes))
-      return true;
+   if(is_primitive(node->attributes) ||
+         is_reference(node->attributes)) return true;
    else{
       eprintf("%s is not a primitive nor a reference type.\n",
             atostr(node));
@@ -725,7 +685,7 @@ bool iscompatible(astree left, astree right){
          );
 
    bool structmatch = 
-      ((la &ATTR_STRUCT)  == (ra & ATTR_STRUCT)) &&
+      ((la & ATTR_STRUCT)  == (ra & ATTR_STRUCT)) &&
          (  find_hashstack(types, left->lexeme) == 
             find_hashstack(types, right->lexeme)
          );
@@ -760,6 +720,38 @@ void checkequality(astree root){
    root->attributes = ATTR_BOOL | ATTR_VREG; 
 }
 
+// type checking vardecl... calls iscompatible for checking
+// e.g.:
+//int[] fibonacci = new int[FIB_SIZE];
+//   VARDECL "=" 4.9.16
+//      ARRAY "[]" 4.9.3
+//         INT "int" 4.9.0
+//         DECLID "fibonacci" 4.9.6
+//      NEWARRAY "new" 4.9.18
+//         INT "int" 4.9.22
+//         INTCON "30" 4.9.26
+//   '=' "=" 4.11.13
+//      INDEX "[" 4.11.9
+//         IDENT "fibonacci" 4.11.0
+//         INTCON "0" 4.11.10
+//      INTCON "0" 4.11.15
+//   '=' "=" 4.12.13
+//      INDEX "[" 4.12.9
+//         IDENT "fibonacci" 4.12.0
+//         INTCON "1" 4.12.10
+//      INTCON "1" 4.12.15
+//
+//   VARDECL "=" 2.5.8
+//      ARRAY "[]" 2.5.3
+//         INT "int" 2.5.0
+//         DECLID "b" 2.5.6
+//      NIL "null" 2.5.10
+//
+//   VARDECL "=" 4.44.12
+//      TYPEID "stack" 4.44.0
+//         DECLID "stack" 4.44.6
+//      CALL "(" 4.44.24
+//         IDENT "new_stack" 4.44.14
 
 void checkvardecl(astree root){
    astree left = root->first;
@@ -771,6 +763,7 @@ void checkvardecl(astree root){
    }
 }
 
+
 void checkwhileif(astree root){
    astree expr = root->first;
    hasboolean(expr);
@@ -781,21 +774,34 @@ void checkwhileif(astree root){
 //matched struct should be okay.
 void checkreturn(astree root){
    assert(currentfunction != NULL);
-   if(root->symbol == RETURNVOID && currentfunction->first){
-      eprintf( "Expect return with an argument for function %s\n", 
-            atostr(currentfunction));
-      return;
-   }
-   if( !iscompatible(root->first, currentfunction->first)){
-      eprintf( "Mismatched return%s function%s types\n.",
-            atostr(root->first),
-            atostr(currentfunction->first));
-      return;
+   switch(root->symbol){
+      case RETURNVOID:
+         if(!(currentfunction->attributes & ATTR_VOID)){
+            eprintf("%s is expected a void for function %s.\n", 
+                  atostr(root), atostr(currentfunction));
+            break;
+         }
+
+      case RETURN:
+         if(!iscompatible(root->first, currentfunction->first)){
+            eprintf("Mismatched return: %s function%s types\n",
+                  atostr(root->first),
+                  atostr(currentfunction->first));
+            break;
+         }
    }
 }
 
 void checkassignment(astree root){
-   STUBPRINTF("check returning type%s\n", atostr(root));
+   astree left = root->first;
+   astree right = left->next;
+   hasany(left);
+   hasany(right);
+   if(!(left->attributes & ATTR_LVALUE)){
+      eprintf("%s is not lvalue.\n", atostr(root));
+   }else{
+      root->attributes = left->attributes | ATTR_VREG;
+   }
 }
 
 
@@ -814,7 +820,7 @@ void checkident(astree root){
       eprintf("Ident found %s (%s)\n", tostr(ident),
       print_attributes(ident->attributes));
       root->attributes = ident->attributes;
-      root->structid = ident->structid;
+      root->stypeid = (char *) ident->structnode->lexeme; 
    }
 }
 
@@ -829,6 +835,11 @@ and adding the vaddr attribute.
 
 */
 
+
+void checkcall(astree root){
+   STUBPRINTF("check returning type%s\n", atostr(root));
+}
+ 
 //IDENT FILLED, FIELD has not filled
 //  
 //  example:
@@ -840,22 +851,26 @@ and adding the vaddr attribute.
 //  somenode.b = 5;
 //  
 
-void checkcall(astree root){
-   STUBPRINTF("check returning type%s\n", atostr(root));
-}
+//stack.data = new string[size]; // Array of null pointers.
+//
+//
+//         '=' "=" 4.15.14
+//            '.' "." 4.15.8
+//               IDENT "stack" 4.15.3
+//               FIELD "data" 4.15.9
+//            NEWARRAY "new" 4.15.16
+//               STRING "string" 4.15.20
+//               IDENT "size" 4.15.27
 
 void checkselect(astree root){
-
    astree typeid = root->first;
-   hsnode structid = find_hashstack(types, typeid->structid);
    astree field = typeid->next;
+   assert(field->symbol == FIELD);
    hasattrib(typeid, ATTR_STRUCT);
-
-   //assert(structid != NULL);
-
+   hsnode structid = find_hashstack(types, typeid->stypeid);
    if(structid == NULL){
       eprintf("%s has unknown struct type %s\n", 
-            atostr(typeid), typeid->structid);
+            atostr(typeid), typeid->stypeid);
       return;
    }
 
@@ -866,6 +881,10 @@ void checkselect(astree root){
             tostr(foundfield), tostr(structid));
       return;
    }
+   root->attributes = foundfield->attributes;
+   root->attributes |= ATTR_VADDR;
+   root->attributes &= ~ATTR_FIELD;
+
 }
 
 void checkindexselect(astree root){
@@ -913,6 +932,48 @@ void checkunary(astree root){
    }
 }
 
+void checkconst(astree root){
+   setconst(root);
+}
+
+
+void checknew(astree root){
+   root->attributes = root->first->attributes | ATTR_VREG;
+}
+
+// basetype is any type that can be used as a base type for an array
+
+bool isbasetype(astree type){
+   bitset_t attr = type->attributes;
+   bool base = attr &
+       (ATTR_BOOL | ATTR_CHAR | ATTR_INT| ATTR_STRING | ATTR_STRUCT)
+       && !(attr |ATTR_ARRAY);
+   return base;
+}
+
+//‘new’ basetype ‘[’ int ‘]’ → basetype[] vreg
+
+void checknewarray(astree root){
+   astree typeid = root->first;
+   astree index = typeid->next;
+
+   if(!isbasetype(typeid)){
+      eprintf("%s is not a basetype usable for an array.\n",
+            atostr(typeid));
+   }
+   hasattrib(index, ATTR_INT);
+   root->attributes = typeid->attributes | ATTR_VREG;
+}
+
+void checknewstring(astree root){
+   astree child = root->first;
+   hasattrib(child, ATTR_INT);
+   root->attributes = ATTR_STRING | ATTR_VREG;
+}
+
+
+
+
 
 
 void preproc(astree root){
@@ -922,14 +983,8 @@ void preproc(astree root){
       case BLOCK     : enterblock(root); break;
 
       case PROTOTYPE : 
-      case FUNCTION  : function(root); break;
+      case FUNCTION  : enterfunction(root); break;
 
-      case INTCON    :
-      case CHARCON   :
-      case STRINGCON :
-      case NIL       :
-      case TRUE      :
-      case FALSE     : setconst(root); break;
    }
 }
 
@@ -1013,9 +1068,9 @@ void postproc(astree root){
 
 
       //4.4.4
-      case NEW        : //new struct type
-      case NEWARRAY   : //new standard void, bool, char, int, string
-      case NEWSTRING  : //a special case for new string
+      case NEW        : checknew(root); break;
+      case NEWARRAY   : checknewarray(root); break;
+      case NEWSTRING  : checknewstring(root); break;
 
                         //IDENT ‘(’ compatible ‘)’ → symbol.lookup
 
@@ -1105,4 +1160,4 @@ void buildsym(void){
 }
 
 
-RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.18 2014-06-14 23:54:31-07 - - $")
+RCSC(SYMTABLE_C,"$Id: symtable.c,v 1.19 2014-06-15 03:38:36-07 - - $")

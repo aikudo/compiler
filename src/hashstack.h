@@ -28,7 +28,7 @@ struct hsnode{
 
    unsigned long attributes; // do i need this? dupped in AST
    hashstack fields;         // if this is struct, it has fields
-   hsnode* structnode;       // if typeid is set, ptr -> struct
+   hsnode structnode;       // if typeid is set, ptr -> struct
    hsnode param;             // a list of parameters
    hsnode next;              // a link for stack
    hsnode link;              // hash link for hash-channing
@@ -73,5 +73,5 @@ hsnode peak_hashstack (hashstack this);
 //void list_hashstack (hashstack this, FILE *out);
 
 
-RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.3 2014-06-14 23:54:31-07 - - $")
+RCSH(HASHSTACK_H,"$Id: hashstack.h,v 1.4 2014-06-15 03:38:36-07 - - $")
 #endif
